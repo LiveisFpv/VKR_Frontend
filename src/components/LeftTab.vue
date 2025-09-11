@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
+const router = useRouter()
 const useSetting = useSettingStore()
 const leftTabHidden = ref(useSetting.LeftTabHidden)
 function toggleLeftTab() {
@@ -8,7 +10,7 @@ function toggleLeftTab() {
   leftTabHidden.value = useSetting.LeftTabHidden
 }
 function RedirecttoSettings() {
-  window.location.href = '/settings'
+  router.push('/settings')
 }
 </script>
 <template>

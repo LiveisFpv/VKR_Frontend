@@ -1,12 +1,14 @@
 <script lang="ts" setup>
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingStore } from '@/stores/settingStore'
 const authStore = useAuthStore()
+const router = useRouter()
 function RedirecttoProfile() {
-  window.location.href = '/profile'
+  router.push('/profile')
 }
 function RedirecttoAuth() {
-  window.location.href = '/auth'
+  router.push('/auth')
 }
 const useSetting = useSettingStore()
 </script>

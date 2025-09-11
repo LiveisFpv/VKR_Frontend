@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 if (authStore.isAuthenticated) {
-  window.location.href = '/'
+  router.replace('/')
 }
 const loginorsignup = ref('login')
 const isLogin = computed(() => loginorsignup.value === 'login')
@@ -15,21 +18,67 @@ function Switch() {
     loginorsignup.value = 'login'
   }
 }
+const onSubmit = (e: Event) => {
+  e.preventDefault()
+  const email = (document.getElementById('email') as HTMLInputElement).value
+  const password = (document.getElementById('password') as HTMLInputElement).value
+  if (!isLogin.value) {
+    const confirmpassword = (document.getElementById('confirmpassword') as HTMLInputElement).value
+    const firstname = (document.getElementById('firstname') as HTMLInputElement).value
+    const lastname = (document.getElementById('lastname') as HTMLInputElement).value
+  }
+  if (isLogin.value) {
+    authStore.login(email, password)
+    console.log(authStore.isAuthenticated)
+    if (authStore.isAuthenticated) {
+      router.replace('/')
+    }
+  } else {
+    authStore.signup(email, password, 'Firstname', 'Lastname')
+  }
+}
 </script>
 <template>
   <div class="auth-view">
     <div class="card auth-card">
-      <div class="login-view" v-if="isLogin">
-        <h2 class="auth-title">Login</h2>
+      <div class="login-view">
+        <h2 class="auth-title">{{ isLogin ? 'Log in' : 'Sign up' }}</h2>
         <div class="auth-form">
-          <input type="email" placeholder="Email" class="input" autocomplete="email" />
+          <input type="email" placeholder="Email" class="input" autocomplete="email" id="email" />
+          <input
+            type="text"
+            placeholder="Lastname"
+            class="input"
+            autocomplete="family-name"
+            id="lastname"
+            v-if="!isLogin"
+          />
+          <input
+            type="text"
+            placeholder="Firstname"
+            class="input"
+            autocomplete="given-name"
+            id="firstname"
+            v-if="!isLogin"
+          />
           <input
             type="password"
             placeholder="Password"
             class="input"
             autocomplete="current-password"
+            id="password"
           />
-          <button class="btn btn--primary">Login</button>
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            class="input"
+            autocomplete="new-password"
+            id="confirmpassword"
+            v-if="!isLogin"
+          />
+          <button class="btn btn--primary" @click="onSubmit">
+            {{ isLogin ? 'Log in' : 'Sign up' }}
+          </button>
           <button class="btn btn-text">Forgot Password?</button>
         </div>
         <div class="oauth">
@@ -43,38 +92,12 @@ function Switch() {
           </button>
         </div>
         <div class="switch">
-          <span class="muted">Don’t have an account?</span>
-          <button class="btn btn-text" @click="Switch()">Create one</button>
-        </div>
-      </div>
-      <div class="signup-view" v-else>
-        <h2 class="auth-title">Sign Up</h2>
-        <div class="auth-form">
-          <input type="text" placeholder="Lastname" class="input" autocomplete="family-name" />
-          <input type="text" placeholder="Firstname" class="input" autocomplete="given-name" />
-          <input type="email" placeholder="Email" class="input" autocomplete="email" />
-          <input type="password" placeholder="Password" class="input" autocomplete="new-password" />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            class="input"
-            autocomplete="new-password"
-          />
-          <button class="btn btn--primary">Create account</button>
-        </div>
-        <div class="oauth">
-          <button class="btn oauth-btn">
-            <img src="/src/assets/google-icon.svg" alt="Google" class="logo oauth-logo" />
-            <span>Continue with Google</span>
+          <span class="muted">{{
+            isLogin ? 'Don’t have an account?' : 'Already have an account?'
+          }}</span>
+          <button class="btn btn-text" @click="Switch()">
+            {{ isLogin ? 'Create one' : 'Sign in' }}
           </button>
-          <button class="btn oauth-btn">
-            <img src="/src/assets/yandex-icon.svg" alt="Yandex" class="logo oauth-logo" />
-            <span>Continue with Yandex</span>
-          </button>
-        </div>
-        <div class="switch">
-          <span class="muted">Already have an account?</span>
-          <button class="btn btn-text" @click="Switch()">Sign in</button>
         </div>
       </div>
     </div>
@@ -137,6 +160,11 @@ function Switch() {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   line-height: 1.2;
+}
+
+.oauth-btn:hover {
+  background: color-mix(in oklab, var(--color-surface), var(--color-text) 3%);
+  border-color: var(--color-border);
 }
 
 .oauth-logo {
