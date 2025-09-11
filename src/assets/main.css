@@ -186,3 +186,15 @@ mark {
   border-radius: 3px;
   padding: 0 2px;
 }
+
+.logo {
+  /* Scale with surrounding text */
+  width: 1.1em;
+  height: 1.1em;
+  display: inline-block;
+  vertical-align: -0.125em; /* better baseline alignment */
+  flex-shrink: 0;
+
+  /* Recolor external black SVGs based on theme */
+  filter: var(--logo-filter);
+}

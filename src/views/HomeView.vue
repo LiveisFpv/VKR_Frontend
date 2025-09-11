@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import LeftTab from '@/components/LeftTab.vue'
+import UpTab from '@/components/UpTab.vue'
+import MainChat from '@/components/MainChat.vue'
+import FooterTab from '@/components/FooterTab.vue'
 </script>
 <template>
   <div>
+    <UpTab />
+    <MainChat />
     <LeftTab />
-    <h1>Home View</h1>
+    <FooterTab />
   </div>
 </template>

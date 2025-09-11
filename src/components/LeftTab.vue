@@ -1,8 +1,14 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-const leftTabHidden = ref(false)
+import { useSettingStore } from '@/stores/settingStore'
+const useSetting = useSettingStore()
+const leftTabHidden = ref(useSetting.LeftTabHidden)
 function toggleLeftTab() {
-  leftTabHidden.value = !leftTabHidden.value
+  useSetting.HideLeftTab()
+  leftTabHidden.value = useSetting.LeftTabHidden
+}
+function RedirecttoSettings() {
+  window.location.href = '/settings'
 }
 </script>
 <template>
@@ -19,29 +25,37 @@ function toggleLeftTab() {
       <button class="btn-menu btn">
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
-          <Transition name="text-fade"><p v-if="!leftTabHidden">New search</p></Transition>
+          <p v-if="!leftTabHidden">New search</p>
         </div>
       </button>
       <button class="btn-menu btn">
         <div class="icon-text">
           <img src="/src/assets/search-icon.svg" alt="" class="logo" />
-          <Transition name="text-fade"><p v-if="!leftTabHidden">Search chats</p></Transition>
+          <p v-if="!leftTabHidden">Search chats</p>
         </div>
       </button>
     </div>
-    <Transition name="menu-fade">
-      <div class="menu" v-if="!leftTabHidden">
-        <label for="menu" class="label">History</label>
-        <button class="btn-menu btn">Search 1</button>
-        <button class="btn-menu btn">Search 2</button>
-        <button class="btn-menu btn">Search 3</button>
-        <button class="btn-menu btn">Search 4</button>
-      </div>
-    </Transition>
+    <div class="menu" v-if="!leftTabHidden">
+      <label for="menu" class="label">History</label>
+      <button class="btn-menu btn">Search 1</button>
+      <button class="btn-menu btn">Search 2</button>
+      <button class="btn-menu btn">Search 3</button>
+      <button class="btn-menu btn">Search 4</button>
+    </div>
+    <div class="footer">
+      <button class="btn-menu btn" @click="RedirecttoSettings">
+        <div class="icon-text">
+          <img src="/src/assets/manage-icon.svg" alt="S" class="logo" />
+          <p v-if="!leftTabHidden">Settings</p>
+        </div>
+      </button>
+    </div>
   </div>
 </template>
 <style lang="css" scoped>
 .left-tab {
+  display: flex;
+  flex-direction: column;
   width: 250px;
   height: 100vh;
   background-color: var(--color-bg-secondary);
@@ -152,25 +166,10 @@ function toggleLeftTab() {
   width: 1.2em;
   height: 1.2em;
 }
-
-/* Transitions for delayed appearance */
-.text-fade-enter-active {
-  transition: opacity var(--transition-base) ease, transform var(--transition-base) ease;
-  transition-delay: 120ms; /* delay only on show */
+.footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
 }
-.text-fade-leave-active {
-  transition: none; /* hide instantly */
-}
-.text-fade-enter-from,
-.text-fade-leave-to { opacity: 0; transform: translateY(-2px); }
-
-.menu-fade-enter-active {
-  transition: opacity var(--transition-slow) ease, transform var(--transition-slow) ease;
-  transition-delay: 150ms; /* delay only on show */
-}
-.menu-fade-leave-active {
-  transition: none; /* hide instantly */
-}
-.menu-fade-enter-from,
-.menu-fade-leave-to { opacity: 0; transform: translateY(-4px); }
 </style>

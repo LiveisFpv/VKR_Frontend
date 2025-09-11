@@ -11,11 +11,16 @@
   --color-bg: #fbfcfe;
   --color-surface: #ffffff;
   --color-text: #0f172a;
+  --color-text-secondary: #334155;
   --color-muted: #475569;
   --color-border: #e5e7eb;
   --color-bg-secondary: #f6f8fc;
 
+  /* Icon rendering */
+  --logo-filter: none; /* no recolor in light theme */
+
   --color-primary: #4f46e5;
+  --color-primary-secondary: #818cf8;
   --color-primary-contrast: #ffffff;
   --color-accent: #06b6d4;
   --color-accent-contrast: #0b1020;
@@ -58,11 +63,16 @@
   --color-bg: #0b1020;
   --color-surface: #101826;
   --color-text: #e2e8f0;
+  --color-text-secondary: #b4bec9;
   --color-muted: #94a3b8;
   --color-border: #1f2a44;
   --color-bg-secondary: #0f1524;
 
+  /* Icon rendering */
+  --logo-filter: invert(1); /* turn black SVGs to white in dark theme */
+
   --color-primary: #818cf8;
+  --color-primary-secondary: #a5b4fc;
   --color-primary-contrast: #0b1020;
   --color-accent: #22d3ee;
   --color-accent-contrast: #0b1020;
