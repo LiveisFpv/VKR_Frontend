@@ -28,9 +28,7 @@ function setTheme(theme: Theme) {
   applyTheme(theme)
   try {
     localStorage.setItem(THEME_KEY, theme)
-  } catch {
-    /* ignore */
-  }
+  } catch {}
 }
 
 function toggleTheme() {

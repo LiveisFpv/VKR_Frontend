@@ -63,6 +63,7 @@ function RedirecttoSettings() {
   border-bottom-right-radius: 25px;
   border-top-right-radius: 25px;
   padding: 15px 5px;
+  padding-bottom: 5px;
   transition: all var(--transition-slow) ease;
 }
 

@@ -5,7 +5,7 @@ const useSetting = useSettingStore()
 <template>
   <div class="chat" :class="{ collapsed: useSetting.LeftTabHidden }">
     <div class="main-chat" :class="{ collapsed: useSetting.LeftTabHidden }">
-      <p>Main Chat Area</p>
+      <p>Main Area</p>
     </div>
     <div class="input-area">
       <input type="text" placeholder="Type your message..." />
@@ -38,7 +38,6 @@ const useSetting = useSettingStore()
   background-color: var(--color-bg);
   color: var(--color-text);
   display: flex;
-  gap: 10px;
   padding: 2.5px;
 }
 .input-area input {
