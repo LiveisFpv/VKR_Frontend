@@ -24,6 +24,16 @@ export interface UserResponse {
   roles: string[]
 }
 
+export interface User {
+  email: string
+  email_confirmed: boolean
+  first_name: string
+  last_name: string
+  locale_type?: string
+  photo?: string
+  roles: string[]
+}
+
 export interface ErrorResponse {
   error: string
 }

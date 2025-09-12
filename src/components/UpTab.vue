@@ -24,6 +24,9 @@ const useSetting = useSettingStore()
       <button class="btn btn-icon" @click="RedirecttoAuth" v-if="!authStore.isAuthenticated">
         Login
       </button>
+      <button class="btn btn-icon" v-if="authStore.isAuthenticated" @click="authStore.logout">
+        <img class="logo" src="/src/assets/logout-icon.svg" alt="[->" />
+      </button>
     </div>
   </div>
 </template>

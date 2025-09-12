@@ -18,7 +18,7 @@ function Switch() {
     loginorsignup.value = 'login'
   }
 }
-const onSubmit = (e: Event) => {
+const onSubmit = async (e: Event) => {
   e.preventDefault()
   const email = (document.getElementById('email') as HTMLInputElement).value
   const password = (document.getElementById('password') as HTMLInputElement).value
@@ -26,15 +26,16 @@ const onSubmit = (e: Event) => {
     const confirmpassword = (document.getElementById('confirmpassword') as HTMLInputElement).value
     const firstname = (document.getElementById('firstname') as HTMLInputElement).value
     const lastname = (document.getElementById('lastname') as HTMLInputElement).value
+    await authStore.signup(email, password, firstname, lastname)
+    const target = (route.query.redirect as string) || '/'
+    router.replace(target)
   }
   if (isLogin.value) {
-    authStore.login(email, password)
-    console.log(authStore.isAuthenticated)
+    await authStore.login(email, password)
     if (authStore.isAuthenticated) {
-      router.replace('/')
+      const target = (route.query.redirect as string) || '/'
+      router.replace(target)
     }
-  } else {
-    authStore.signup(email, password, 'Firstname', 'Lastname')
   }
 }
 </script>
