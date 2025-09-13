@@ -83,11 +83,11 @@ const onSubmit = async (e: Event) => {
           <button class="btn btn-text">Forgot Password?</button>
         </div>
         <div class="oauth">
-          <button class="btn oauth-btn">
+          <button class="btn oauth-btn" @click="authStore.oauth('google', '/')">
             <img src="/src/assets/google-icon.svg" alt="Google" class="logo oauth-logo" />
             <span>Continue with Google</span>
           </button>
-          <button class="btn oauth-btn">
+          <button class="btn oauth-btn" @click="authStore.oauth('yandex', '/')">
             <img src="/src/assets/yandex-icon.svg" alt="Yandex" class="logo oauth-logo" />
             <span>Continue with Yandex</span>
           </button>

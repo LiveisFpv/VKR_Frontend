@@ -6,6 +6,7 @@ import type {
   UserResponse,
   TokenResReq,
 } from './types'
+import { FRONTEND_BASE_URL } from '@/config'
 
 export const SSOApi = {
   login(payload: UserLoginRequest) {
@@ -25,5 +26,19 @@ export const SSOApi = {
   },
   update(payload: UserUpdateRequest) {
     return api.put<UserResponse>('/auth/update', payload).then((r) => r.data)
+  },
+  // Note: use axios `params` so redirect_url is URL-encoded correctly
+  oauth(provider: string, redirectPath: string) {
+    const redirect_url = `${FRONTEND_BASE_URL}${redirectPath}`
+    return api
+      .get<void>(`/oauth/${encodeURIComponent(provider)}` as const, {
+        params: { redirect_url },
+      })
+      .then((r) => r.data)
+  },
+  // Helper to build a full URL for a top-level browser redirect
+  oauthUrl(provider: string, redirectPath: string) {
+    const encodedRedirect = encodeURIComponent(`${FRONTEND_BASE_URL}${redirectPath}`)
+    return `${api.defaults.baseURL}/oauth/${encodeURIComponent(provider)}?redirect_url=${encodedRedirect}`
   },
 }

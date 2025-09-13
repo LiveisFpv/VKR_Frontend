@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingStore } from '@/stores/settingStore'
+import { computed } from 'vue'
 const authStore = useAuthStore()
 const router = useRouter()
 function RedirecttoProfile() {
@@ -11,6 +12,14 @@ function RedirecttoAuth() {
   router.push('/auth')
 }
 const useSetting = useSettingStore()
+
+const props = defineProps<{
+  showUpload?: boolean
+  showMenu?: boolean
+}>()
+
+const showUpload = computed(() => props.showUpload ?? true)
+const showMenu = computed(() => props.showMenu ?? true)
 </script>
 <template>
   <div class="up-tab" :class="{ collapsed: useSetting.LeftTabHidden }">
@@ -19,8 +28,10 @@ const useSetting = useSettingStore()
       <button class="btn avatar" @click="RedirecttoProfile" v-if="authStore.isAuthenticated">
         U
       </button>
-      <button class="btn btn-icon"><img class="logo" src="/src/assets/upload-icon.svg" /></button>
-      <button class="btn btn-icon">&ctdot;</button>
+      <button class="btn btn-icon" v-if="showUpload">
+        <img class="logo" src="/src/assets/upload-icon.svg" />
+      </button>
+      <button class="btn btn-icon" v-if="showMenu">&ctdot;</button>
       <button class="btn btn-icon" @click="RedirecttoAuth" v-if="!authStore.isAuthenticated">
         Login
       </button>

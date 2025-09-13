@@ -21,15 +21,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!AccessToken.value)
   const User = ref<User | null>(null)
 
-  async function login(email: string, password: string) {
+  async function authenticate() {
     try {
-      const payload = <UserLoginRequest>{
-        login: email,
-        password: password,
-      }
-      const res = await SSOApi.login(payload)
-      AccessToken.value = res.access_token
-    } finally {
       const userRes = await SSOApi.authenticate()
       User.value = <User>{
         email: userRes.email,
@@ -40,7 +33,25 @@ export const useAuthStore = defineStore('auth', () => {
         photo: userRes.photo,
         roles: userRes.roles,
       }
+    } catch {
+      AccessToken.value = null
     }
+  }
+
+  async function login(email: string, password: string) {
+    try {
+      const payload = <UserLoginRequest>{
+        login: email,
+        password: password,
+      }
+      const res = await SSOApi.login(payload)
+      AccessToken.value = res.access_token
+    } finally {
+      await authenticate()
+    }
+  }
+  async function oauth(provider: string, redirect_url: string) {
+    window.location.href = await SSOApi.oauthUrl(provider, redirect_url)
   }
 
   async function signup(email: string, password: string, first_name: string, last_name: string) {
@@ -86,5 +97,5 @@ export const useAuthStore = defineStore('auth', () => {
     { immediate: true },
   )
 
-  return { AccessToken, isAuthenticated, login, logout, signup, refreshToken }
+  return { AccessToken, isAuthenticated, login, logout, signup, refreshToken, authenticate, oauth }
 })

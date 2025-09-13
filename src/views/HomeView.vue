@@ -6,7 +6,7 @@ import FooterTab from '@/components/FooterTab.vue'
 </script>
 <template>
   <div>
-    <UpTab />
+    <UpTab :show-menu="true" :show-upload="true" />
     <MainChat />
     <LeftTab />
     <FooterTab />

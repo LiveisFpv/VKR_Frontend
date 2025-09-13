@@ -12,11 +12,14 @@ function toggleLeftTab() {
 function RedirecttoSettings() {
   router.push('/settings')
 }
+function RedirecttoHome() {
+  router.push('/')
+}
 </script>
 <template>
   <div class="left-tab" :class="{ hidden: leftTabHidden }">
     <div class="header" :class="{ hidden: leftTabHidden }">
-      <button class="btn btn-icon" aria-label="Home">
+      <button class="btn btn-icon" @click="RedirecttoHome" aria-label="Home">
         <img src="/src/assets/book-logo.svg" alt="L" class="logo" />
       </button>
       <button class="btn btn-icon" @click="toggleLeftTab" aria-label="Toggle sidebar">
@@ -24,7 +27,7 @@ function RedirecttoSettings() {
       </button>
     </div>
     <div class="menu">
-      <button class="btn-menu btn">
+      <button class="btn-menu btn" @click="RedirecttoHome">
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
           <p v-if="!leftTabHidden">New search</p>

@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
 
 import './assets/main.css'
 import './assets/theme.css'
@@ -45,7 +46,16 @@ applyTheme(readSavedTheme() ?? 'dark')
 
 const app = createApp(App)
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
+
+// Auth bootstrap: refresh token and load user on app start
+try {
+  const auth = useAuthStore(pinia)
+  await auth.authenticate()
+} catch {
+  // ignore bootstrap auth errors; user stays logged out
+}
 
 app.mount('#app')

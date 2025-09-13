@@ -12,7 +12,8 @@ api.interceptors.request.use((config) => {
   const auth = useAuthStore()
   const token = auth.AccessToken
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers = config.headers ?? {}
+    ;(config.headers as any).Authorization = `Bearer ${token}`
   }
   return config
 })
@@ -26,24 +27,38 @@ api.interceptors.response.use(
     const auth = useAuthStore()
     const original = error.config!
     const status = error.response?.status
+    const reqUrl = (original?.url || '') as string
+    const isRefreshCall = reqUrl.includes('/auth/refresh')
 
-    if (status === 401 && !original.headers?.['x-retry']) {
+    if (status === 401 && !(original as any)._retry && !isRefreshCall) {
+      let refreshOk = true
       if (!isRefreshing) {
-        await new Promise<void>((res) => queue.push(res))
-      } else {
+        isRefreshing = true
         try {
-          isRefreshing = true
           await auth.refreshToken()
+        } catch (e) {
+          refreshOk = false
+          // optionally clear access token on failed refresh
+          try {
+            if (auth.AccessToken) {
+              await auth.logout()
+            }
+          } catch {}
         } finally {
           isRefreshing = false
           queue.forEach((res) => res())
           queue = []
         }
+      } else {
+        await new Promise<void>((res) => queue.push(res))
       }
-      original.headers = { ...original.headers, 'x-retry': '1' }
+      if (!refreshOk) {
+        return Promise.reject(normalizeApiError(error))
+      }
+      ;(original as any)._retry = true
       return api(original)
     }
-    throw normalizeApiError(error)
+    return Promise.reject(normalizeApiError(error))
   },
 )
 
