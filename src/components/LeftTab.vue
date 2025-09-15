@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
 const router = useRouter()
@@ -15,6 +15,22 @@ function RedirecttoSettings() {
 function RedirecttoHome() {
   router.push('/')
 }
+
+const props = defineProps<{
+  hidden?: boolean
+}>()
+
+const hidden = computed(() => props.hidden ?? null)
+
+watch(
+  hidden,
+  (val) => {
+    if (val != leftTabHidden.value) {
+      toggleLeftTab()
+    }
+  },
+  { immediate: true },
+)
 </script>
 <template>
   <div class="left-tab" :class="{ hidden: leftTabHidden }">

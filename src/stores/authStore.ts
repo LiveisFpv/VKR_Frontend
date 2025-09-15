@@ -97,5 +97,15 @@ export const useAuthStore = defineStore('auth', () => {
     { immediate: true },
   )
 
-  return { AccessToken, isAuthenticated, login, logout, signup, refreshToken, authenticate, oauth }
+  return {
+    AccessToken,
+    isAuthenticated,
+    User,
+    login,
+    logout,
+    signup,
+    refreshToken,
+    authenticate,
+    oauth,
+  }
 })
