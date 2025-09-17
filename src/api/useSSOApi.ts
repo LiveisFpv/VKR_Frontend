@@ -24,7 +24,8 @@ export const SSOApi = {
   create(payload: UserRegisterRequest) {
     return api.post<UserResponse>('/auth/create', payload).then((r) => r.data)
   },
-  update(payload: UserUpdateRequest) {
+  // Explicitly named user update method
+  updateUser(payload: UserUpdateRequest) {
     return api.put<UserResponse>('/auth/update', payload).then((r) => r.data)
   },
   // Note: use axios `params` so redirect_url is URL-encoded correctly

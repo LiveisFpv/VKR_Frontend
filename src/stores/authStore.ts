@@ -83,6 +83,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateUser(payload: UserUpdateRequest) {
+    const updated = await SSOApi.updateUser(payload)
+    User.value = <User>{
+      email: updated.email,
+      email_confirmed: updated.email_confirmed,
+      first_name: updated.first_name,
+      last_name: updated.last_name,
+      locale_type: updated.locale_type,
+      photo: updated.photo,
+      roles: updated.roles,
+    }
+  }
+
   // persist to localStorage
   watch(
     AccessToken,
@@ -107,5 +120,6 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     authenticate,
     oauth,
+    updateUser,
   }
 })
