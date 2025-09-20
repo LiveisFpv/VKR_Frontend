@@ -23,12 +23,12 @@ const history = ref<string[]>([])
 const results = ref<PaperCard[]>([])
 const loading = ref(false)
 const errorMsg = ref('')
-const hoveredKey = ref<string | null>(null)
+const selectedKey = ref<string | null>(null)
 
 const hasResults = computed(() => results.value.length > 0)
 const activePaper = computed(() => {
-  if (!hoveredKey.value) return null
-  return results.value.find((paper) => paper.key === hoveredKey.value) ?? null
+  if (!selectedKey.value) return null
+  return results.value.find((paper) => paper.key === selectedKey.value) ?? null
 })
 
 function normalizeBestLocation(raw: unknown): Record<string, any> | null {
@@ -94,7 +94,7 @@ async function runSearch(text?: string) {
       .map((paper, index) => toPaperCard(paper, index))
       .filter((item): item is PaperCard => !!item)
     results.value = mapped
-    hoveredKey.value = mapped[0]?.key ?? null
+    selectedKey.value = mapped[0]?.key ?? null
     pushHistory(searchText)
     if (!mapped.length) {
       errorMsg.value = 'No results matched your query.'
@@ -115,12 +115,8 @@ function applyHistory(searchText: string) {
   runSearch(searchText)
 }
 
-function showPreview(key: string) {
-  hoveredKey.value = key
-}
-
-function clearPreview() {
-  hoveredKey.value = null
+function selectPaper(key: string) {
+  selectedKey.value = key
 }
 </script>
 <template>
@@ -151,58 +147,61 @@ function clearPreview() {
         <span v-else class="status__error">{{ errorMsg }}</span>
       </div>
 
-      <section class="results" :class="{ empty: !hasResults }" @mouseleave="clearPreview">
+      <section class="results" :class="{ empty: !hasResults }">
         <template v-if="hasResults">
-          <div class="cards">
-            <article
-              v-for="paper in results"
-              :key="paper.key"
-              class="paper-card"
-              tabindex="0"
-              @mouseenter="showPreview(paper.key)"
-              @focusin="showPreview(paper.key)"
-            >
-              <header class="paper-card__header">
-                <span v-if="paper.year" class="paper-card__year">{{ paper.year }}</span>
-                <h3 class="paper-card__title">{{ paper.title }}</h3>
-              </header>
-              <p class="paper-card__abstract">{{ paper.abstract }}</p>
-              <footer class="paper-card__footer">
-                <span v-if="paper.sourceName" class="paper-card__source">{{
-                  paper.sourceName
-                }}</span>
-                <span v-if="paper.isOpenAccess" class="paper-card__badge">Open Access</span>
-              </footer>
-            </article>
-          </div>
+          <div class="results-grid">
+            <div class="cards">
+              <article
+                v-for="paper in results"
+                :key="paper.key"
+                :class="['paper-card', { 'paper-card--active': selectedKey === paper.key }]"
+                tabindex="0"
+                @click="selectPaper(paper.key)"
+                @keydown.enter.prevent="selectPaper(paper.key)"
+                @keydown.space.prevent="selectPaper(paper.key)"
+              >
+                <header class="paper-card__header">
+                  <span v-if="paper.year" class="paper-card__year">{{ paper.year }}</span>
+                  <h3 class="paper-card__title">{{ paper.title }}</h3>
+                </header>
+                <p class="paper-card__abstract">{{ paper.abstract }}</p>
+                <footer class="paper-card__footer">
+                  <span v-if="paper.sourceName" class="paper-card__source">{{
+                    paper.sourceName
+                  }}</span>
+                  <span v-if="paper.isOpenAccess" class="paper-card__badge">Open Access</span>
+                </footer>
+              </article>
+            </div>
 
-          <div v-if="activePaper" class="paper-preview">
-            <h3>{{ activePaper.title }}</h3>
-            <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
-            <div class="paper-preview__meta">
-              <span v-if="activePaper.year">Year: {{ activePaper.year }}</span>
-              <span v-if="activePaper.sourceName">Source: {{ activePaper.sourceName }}</span>
-            </div>
-            <div class="paper-preview__links">
-              <a
-                v-if="activePaper.pdfUrl"
-                :href="activePaper.pdfUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn--tiny"
-              >
-                Open PDF
-              </a>
-              <a
-                v-if="activePaper.landingUrl"
-                :href="activePaper.landingUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn--tiny"
-              >
-                Article page
-              </a>
-            </div>
+            <aside v-if="activePaper" class="paper-preview">
+              <h3>{{ activePaper.title }}</h3>
+              <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
+              <div class="paper-preview__meta">
+                <span v-if="activePaper.year">Year: {{ activePaper.year }}</span>
+                <span v-if="activePaper.sourceName">Source: {{ activePaper.sourceName }}</span>
+              </div>
+              <div class="paper-preview__links">
+                <a
+                  v-if="activePaper.pdfUrl"
+                  :href="activePaper.pdfUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn--tiny"
+                >
+                  Open PDF
+                </a>
+                <a
+                  v-if="activePaper.landingUrl"
+                  :href="activePaper.landingUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn--tiny"
+                >
+                  Article page
+                </a>
+              </div>
+            </aside>
           </div>
         </template>
         <div v-else class="empty-state">
@@ -307,12 +306,19 @@ function clearPreview() {
   background: rgba(0, 0, 0, 0.03);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  overflow: hidden;
+  overflow-y: auto;
 }
 .results.empty {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: var(--space-4);
+  align-items: start;
 }
 
 .cards {
@@ -345,6 +351,13 @@ function clearPreview() {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
   border-color: var(--color-primary-secondary);
   z-index: 2;
+}
+
+.paper-card--active {
+  border-color: var(--color-primary-secondary);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.14);
+  transform: translateY(-6px) scale(1.015);
+  z-index: 3;
 }
 
 .paper-card__header {
@@ -381,16 +394,16 @@ function clearPreview() {
 }
 
 .paper-preview {
-  position: absolute;
-  right: var(--space-4);
-  bottom: var(--space-4);
-  max-width: min(420px, 45%);
+  position: sticky;
+  top: var(--space-4);
   background: var(--color-bg);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
   border: 1px solid var(--color-primary-secondary);
-  z-index: 5;
+  max-height: 60vh;
+  overflow-y: auto;
+  align-self: start;
 }
 .paper-preview h3 {
   margin: 0 0 var(--space-2);
@@ -402,6 +415,7 @@ function clearPreview() {
 .paper-preview__meta {
   display: flex;
   gap: var(--space-3);
+  flex-wrap: wrap;
   font-size: 0.85rem;
   color: var(--color-muted);
   margin-bottom: var(--space-3);
@@ -450,13 +464,13 @@ function clearPreview() {
 }
 
 /* @media (max-width: 1200px) {
-  .paper-preview {
-    position: static;
-    max-width: none;
-    margin-top: var(--space-3);
+  .results-grid {
+    grid-template-columns: 1fr;
   }
-  .results {
-    padding-bottom: var(--space-6);
+  .paper-preview {
+    position: relative;
+    top: auto;
+    max-height: none;
   }
 }
 
