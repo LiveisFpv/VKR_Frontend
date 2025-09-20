@@ -45,3 +45,33 @@ export interface UserUpdateRequest {
   locale_type?: string
   password?: string
 }
+
+export interface PapersResponse {
+  papers?: PaperResponse[]
+}
+
+export interface PaperResponse {
+  abstract?: string
+  best_oa_location?: string
+  id?: string
+  title?: string
+  year?: number
+}
+
+export interface AddPaperRequest {
+  abstract?: string
+  best_oa_location?: string
+  id?: string
+  referenced_paper?: ReferencedPaper[]
+  related_paper?: RelatedPaper[]
+  title?: string
+  year?: number
+}
+
+export interface RelatedPaper {
+  id?: string
+}
+
+export interface ReferencedPaper {
+  id?: string
+}
