@@ -2,8 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
+import { useChatStore } from '@/stores/chatStore'
+import { storeToRefs } from 'pinia'
 const router = useRouter()
 const useSetting = useSettingStore()
+const chatStore = useChatStore()
+const { history: chats, activeChatId } = storeToRefs(chatStore)
 const leftTabHidden = ref(useSetting.LeftTabHidden)
 function toggleLeftTab() {
   useSetting.HideLeftTab()
@@ -13,6 +17,17 @@ function RedirecttoSettings() {
   router.push('/settings')
 }
 function RedirecttoHome() {
+  router.push('/')
+}
+
+function handleNewSearch() {
+  const chat = chatStore.createChat()
+  router.push('/')
+  chatStore.setActiveChat(chat.id)
+}
+
+function selectChat(id: string) {
+  chatStore.setActiveChat(id)
   router.push('/')
 }
 
@@ -43,7 +58,7 @@ watch(
       </button>
     </div>
     <div class="menu">
-      <button class="btn-menu btn" @click="RedirecttoHome">
+      <button class="btn-menu btn" @click="handleNewSearch">
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
           <p v-if="!leftTabHidden">New search</p>
@@ -56,12 +71,20 @@ watch(
         </div>
       </button>
     </div>
-    <div class="menu" v-if="!leftTabHidden">
+    <div class="menu history" v-if="!leftTabHidden">
       <label for="menu" class="label">History</label>
-      <button class="btn-menu btn">Search 1</button>
-      <button class="btn-menu btn">Search 2</button>
-      <button class="btn-menu btn">Search 3</button>
-      <button class="btn-menu btn">Search 4</button>
+      <template v-if="chats.length">
+        <button
+          v-for="chat in chats"
+          :key="chat.id"
+          class="btn-menu btn history-item"
+          :class="{ active: chat.id === activeChatId }"
+          @click="selectChat(chat.id)"
+        >
+          <span class="history-title">{{ chat.title }}</span>
+        </button>
+      </template>
+      <p v-else class="placeholder">No chats yet. Start a new search.</p>
     </div>
     <div class="footer">
       <button class="btn-menu btn" @click="RedirecttoSettings">
@@ -133,6 +156,10 @@ watch(
   flex-direction: column;
   align-items: center;
 }
+.menu.history {
+  align-items: stretch;
+  gap: 8px;
+}
 .label {
   align-self: flex-start;
   margin-bottom: 10px;
@@ -162,6 +189,36 @@ watch(
 }
 .btn-menu:active {
   transform: translateY(1px);
+}
+
+.history-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-color: transparent;
+}
+.history-item .history-title {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: inherit;
+}
+.history-item .history-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+.history-item.active {
+  border-color: var(--color-primary-secondary);
+}
+.history-item.active .history-meta {
+  color: var(--color-primary-secondary);
+}
+.placeholder {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  padding: 0 16px;
+  text-align: center;
 }
 
 .btn.btn-icon {

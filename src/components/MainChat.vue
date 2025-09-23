@@ -1,35 +1,43 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useSettingStore } from '@/stores/settingStore'
+import { useChatStore, type PaperCard } from '@/stores/chatStore'
 import { AlibApi } from '@/api/useAlibApi'
 import type { PaperResponse } from '@/api/types'
 
 const useSetting = useSettingStore()
-
-interface PaperCard {
-  key: string
-  id?: string
-  title: string
-  abstract: string
-  year?: number
-  pdfUrl?: string
-  landingUrl?: string
-  isOpenAccess?: boolean
-  sourceName?: string
-}
+const chatStore = useChatStore()
 
 const query = ref('')
-const history = ref<string[]>([])
-const results = ref<PaperCard[]>([])
 const loading = ref(false)
 const errorMsg = ref('')
-const selectedKey = ref<string | null>(null)
 
-const hasResults = computed(() => results.value.length > 0)
-const activePaper = computed(() => {
-  if (!selectedKey.value) return null
-  return results.value.find((paper) => paper.key === selectedKey.value) ?? null
+const selectedMessageId = ref<string | null>(null)
+const selectedPaperKey = ref<string | null>(null)
+const logRef = ref<HTMLElement | null>(null)
+
+const messages = computed(() => chatStore.activeChat?.messages ?? [])
+const hasMessages = computed(() => messages.value.length > 0)
+
+const activeMessage = computed(() => {
+  if (!selectedMessageId.value) return null
+  return messages.value.find((item) => item.id === selectedMessageId.value) ?? null
 })
+
+const activePaper = computed(() => {
+  const message = activeMessage.value
+  if (!message || !selectedPaperKey.value) return null
+  return message.results.find((paper) => paper.key === selectedPaperKey.value) ?? null
+})
+
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+function formatTime(ts: number) {
+  return timeFormatter.format(new Date(ts))
+}
 
 function normalizeBestLocation(raw: unknown): Record<string, any> | null {
   if (!raw) return null
@@ -73,12 +81,6 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
   }
 }
 
-function pushHistory(searchText: string) {
-  const trimmed = searchText.trim()
-  if (!trimmed) return
-  history.value = [trimmed, ...history.value.filter((item) => item !== trimmed)].slice(0, 10)
-}
-
 async function runSearch(text?: string) {
   const searchText = (text ?? query.value).trim()
   errorMsg.value = ''
@@ -93,11 +95,15 @@ async function runSearch(text?: string) {
     const mapped = (response.papers ?? [])
       .map((paper, index) => toPaperCard(paper, index))
       .filter((item): item is PaperCard => !!item)
-    results.value = mapped
-    selectedKey.value = mapped[0]?.key ?? null
-    pushHistory(searchText)
+    const message = chatStore.addMessage(searchText, mapped)
     if (!mapped.length) {
       errorMsg.value = 'No results matched your query.'
+    }
+    selectedMessageId.value = message.id
+    selectedPaperKey.value = mapped[0]?.key ?? null
+    await nextTick()
+    if (logRef.value) {
+      logRef.value.scrollTop = logRef.value.scrollHeight
     }
   } catch (error: any) {
     errorMsg.value = error?.message || 'Search failed. Please try again.'
@@ -110,104 +116,139 @@ function onSubmit() {
   runSearch()
 }
 
-function applyHistory(searchText: string) {
-  query.value = searchText
-  runSearch(searchText)
+function selectPaper(messageId: string, paperKey: string) {
+  selectedMessageId.value = messageId
+  selectedPaperKey.value = paperKey
 }
 
-function selectPaper(key: string) {
-  selectedKey.value = key
-}
+onMounted(() => {
+  if (!chatStore.activeChatId) {
+    const chat = chatStore.createChat()
+    chatStore.setActiveChat(chat.id)
+  }
+})
+
+watch(
+  () => chatStore.activeChatId,
+  () => {
+    const msgs = chatStore.activeChat?.messages ?? []
+    if (msgs.length) {
+      const last = msgs[msgs.length - 1]
+      selectedMessageId.value = last.id
+      selectedPaperKey.value = last.results[0]?.key ?? null
+      nextTick().then(() => {
+        if (logRef.value) {
+          logRef.value.scrollTop = logRef.value.scrollHeight
+        }
+      })
+    } else {
+      selectedMessageId.value = null
+      selectedPaperKey.value = null
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  messages,
+  async () => {
+    await nextTick()
+    if (logRef.value) {
+      logRef.value.scrollTop = logRef.value.scrollHeight
+    }
+  },
+  { deep: true },
+)
 </script>
 <template>
   <div class="chat" :class="{ collapsed: useSetting.LeftTabHidden }">
     <div class="main-chat" :class="{ collapsed: useSetting.LeftTabHidden }">
-      <!-- <div class="main-header">
-        <h2>Search Papers</h2>
-        <p>Type a query to explore relevant publications.</p>
-      </div> -->
-
-      <section v-if="history.length" class="history">
-        <div class="history-title">Search history</div>
-        <div class="history-list">
-          <button
-            v-for="item in history"
-            :key="item"
-            type="button"
-            class="history-chip"
-            @click="applyHistory(item)"
-          >
-            {{ item }}
-          </button>
-        </div>
-      </section>
-
       <div class="status" v-if="loading || errorMsg">
         <span v-if="loading" class="status__loading">Searching...</span>
         <span v-else class="status__error">{{ errorMsg }}</span>
       </div>
 
-      <section class="results" :class="{ empty: !hasResults }">
-        <template v-if="hasResults">
-          <div class="results-grid">
-            <div class="cards">
-              <article
-                v-for="paper in results"
-                :key="paper.key"
-                :class="['paper-card', { 'paper-card--active': selectedKey === paper.key }]"
-                tabindex="0"
-                @click="selectPaper(paper.key)"
-                @keydown.enter.prevent="selectPaper(paper.key)"
-                @keydown.space.prevent="selectPaper(paper.key)"
-              >
-                <header class="paper-card__header">
-                  <span v-if="paper.year" class="paper-card__year">{{ paper.year }}</span>
-                  <h3 class="paper-card__title">{{ paper.title }}</h3>
-                </header>
-                <p class="paper-card__abstract">{{ paper.abstract }}</p>
-                <footer class="paper-card__footer">
-                  <span v-if="paper.sourceName" class="paper-card__source">{{
-                    paper.sourceName
-                  }}</span>
-                  <span v-if="paper.isOpenAccess" class="paper-card__badge">Open Access</span>
-                </footer>
-              </article>
+      <div class="chat-log" ref="logRef">
+        <template v-if="hasMessages">
+          <section
+            v-for="message in messages"
+            :key="message.id"
+            class="chat-turn"
+            :class="{ active: message.id === selectedMessageId }"
+          >
+            <header class="chat-turn__header">
+              <span class="chat-turn__prompt">{{ message.query }}</span>
+              <span class="chat-turn__time">{{ formatTime(message.createdAt) }}</span>
+            </header>
+
+            <div v-if="message.results.length" class="results-grid">
+              <div class="cards">
+                <article
+                  v-for="paper in message.results"
+                  :key="paper.key"
+                  :class="[
+                    'paper-card',
+                    {
+                      'paper-card--active':
+                        message.id === selectedMessageId && paper.key === selectedPaperKey,
+                    },
+                  ]"
+                  tabindex="0"
+                  @click="selectPaper(message.id, paper.key)"
+                  @keydown.enter.prevent="selectPaper(message.id, paper.key)"
+                  @keydown.space.prevent="selectPaper(message.id, paper.key)"
+                >
+                  <header class="paper-card__header">
+                    <span v-if="paper.year" class="paper-card__year">{{ paper.year }}</span>
+                    <h3 class="paper-card__title">{{ paper.title }}</h3>
+                  </header>
+                  <p class="paper-card__abstract">{{ paper.abstract }}</p>
+                  <footer class="paper-card__footer">
+                    <span v-if="paper.sourceName" class="paper-card__source">{{
+                      paper.sourceName
+                    }}</span>
+                    <span v-if="paper.isOpenAccess" class="paper-card__badge">Open Access</span>
+                  </footer>
+                </article>
+              </div>
+
+              <aside v-if="message.id === selectedMessageId && activePaper" class="paper-preview">
+                <h3>{{ activePaper.title }}</h3>
+                <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
+                <div class="paper-preview__meta">
+                  <span v-if="activePaper.year">Year: {{ activePaper.year }}</span>
+                  <span v-if="activePaper.sourceName">Source: {{ activePaper.sourceName }}</span>
+                </div>
+                <div class="paper-preview__links">
+                  <a
+                    v-if="activePaper.pdfUrl"
+                    :href="activePaper.pdfUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn--tiny"
+                  >
+                    Open PDF
+                  </a>
+                  <a
+                    v-if="activePaper.landingUrl"
+                    :href="activePaper.landingUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn--tiny"
+                  >
+                    Article page
+                  </a>
+                </div>
+              </aside>
             </div>
 
-            <aside v-if="activePaper" class="paper-preview">
-              <h3>{{ activePaper.title }}</h3>
-              <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
-              <div class="paper-preview__meta">
-                <span v-if="activePaper.year">Year: {{ activePaper.year }}</span>
-                <span v-if="activePaper.sourceName">Source: {{ activePaper.sourceName }}</span>
-              </div>
-              <div class="paper-preview__links">
-                <a
-                  v-if="activePaper.pdfUrl"
-                  :href="activePaper.pdfUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn--tiny"
-                >
-                  Open PDF
-                </a>
-                <a
-                  v-if="activePaper.landingUrl"
-                  :href="activePaper.landingUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn--tiny"
-                >
-                  Article page
-                </a>
-              </div>
-            </aside>
-          </div>
+            <p v-else class="no-results">No results captured for this query.</p>
+          </section>
         </template>
         <div v-else class="empty-state">
-          <p>Search history and results will appear after your first query.</p>
+          <p>Start a new search to see results here.</p>
         </div>
-      </section>
+      </div>
     </div>
 
     <form class="input-area" @submit.prevent="onSubmit">
@@ -245,7 +286,8 @@ function selectPaper(key: string) {
 .main-chat {
   position: relative;
   display: grid;
-  gap: var(--space-4);
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-3);
   overflow: hidden;
 }
 
@@ -259,35 +301,43 @@ function selectPaper(key: string) {
   font-size: 0.95rem;
 }
 
-.history {
+.chat-log {
+  position: relative;
+  overflow-y: auto;
+  padding-right: 4px;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-4);
+  padding-bottom: var(--space-2);
 }
-.history-title {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  color: var(--color-muted);
-  letter-spacing: 0.05em;
+
+.chat-turn {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  border: 1px solid transparent;
+  transition:
+    border-color var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease;
 }
-.history-list {
+.chat-turn.active {
+  border-color: var(--color-primary-secondary);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+.chat-turn__header {
   display: flex;
+  justify-content: space-between;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  align-items: baseline;
 }
-.history-chip {
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text);
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition-fast) ease;
+.chat-turn__prompt {
+  font-weight: 600;
+  font-size: 1.05rem;
 }
-.history-chip:hover,
-.history-chip:focus-visible {
-  background: var(--color-primary-secondary);
-  color: var(--color-bg);
+.chat-turn__time {
+  font-size: 0.8rem;
+  color: var(--color-muted);
 }
 
 .status {
@@ -299,19 +349,6 @@ function selectPaper(key: string) {
 }
 .status__error {
   color: var(--color-danger);
-}
-
-.results {
-  position: relative;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  overflow-y: auto;
-}
-.results.empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .results-grid {
@@ -391,6 +428,12 @@ function selectPaper(key: string) {
 .paper-card__badge {
   color: var(--color-success);
   font-weight: 600;
+}
+
+.no-results {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
 }
 
 .paper-preview {
