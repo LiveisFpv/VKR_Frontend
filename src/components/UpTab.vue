@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { computed } from 'vue'
+import { useI18n } from '@/i18n'
 const authStore = useAuthStore()
 const router = useRouter()
 function RedirecttoProfile() {
@@ -13,6 +14,7 @@ function RedirecttoAuth() {
 }
 
 const useSetting = useSettingStore()
+const { t } = useI18n()
 
 const props = defineProps<{
   showUpload?: boolean
@@ -36,7 +38,7 @@ const showMenu = computed(() => props.showMenu ?? true)
       </button>
       <button class="btn btn-icon" v-if="showMenu">&ctdot;</button>
       <button class="btn btn-icon" @click="RedirecttoAuth" v-if="!authStore.isAuthenticated">
-        Login
+        {{ t('auth.login') }}
       </button>
       <button class="btn btn-icon" v-if="authStore.isAuthenticated" @click="authStore.logout">
         <img class="logo" src="/src/assets/logout-icon.svg" alt="[->" />

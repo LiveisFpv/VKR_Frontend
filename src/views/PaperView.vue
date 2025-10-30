@@ -1,6 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useI18n } from '@/i18n'
+const { t } = useI18n()
+</script>
 <template>
   <div>
-    <h1>Paper View</h1>
+    <h1>{{ t('paper.viewTitle') }}</h1>
   </div>
 </template>

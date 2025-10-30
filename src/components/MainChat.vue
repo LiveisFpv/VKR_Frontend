@@ -5,10 +5,12 @@ import { useAuthStore } from '@/stores/authStore'
 import { useChatStore, type PaperCard } from '@/stores/chatStore'
 import { AlibApi } from '@/api/useAlibApi'
 import type { PaperResponse } from '@/api/types'
+import { useI18n } from '@/i18n'
 
 const useSetting = useSettingStore()
 const auth = useAuthStore()
 const chatStore = useChatStore()
+const { t } = useI18n()
 
 const query = ref('')
 const loading = ref(false)
@@ -74,8 +76,8 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
   return {
     key: `${paper.id || title || 'paper'}-${index}`,
     id: paper.id,
-    title: title || 'Untitled paper',
-    abstract: abstract || 'No abstract available.',
+    title: title || t('chat.untitled'),
+    abstract: abstract || t('chat.noAbstract'),
     year: paper.year,
     pdfUrl: best?.pdf_url,
     landingUrl: best?.landing_page_url,
@@ -88,11 +90,11 @@ async function runSearch(text?: string) {
   const searchText = (text ?? query.value).trim()
   errorMsg.value = ''
   if (searchBlocked.value) {
-    errorMsg.value = 'Search is disabled for your role.'
+    errorMsg.value = t('chat.blockedNote')
     return
   }
   if (!searchText) {
-    errorMsg.value = 'Enter a query to search.'
+    errorMsg.value = t('chat.error.enterQuery')
     return
   }
   query.value = searchText
@@ -104,7 +106,7 @@ async function runSearch(text?: string) {
       .filter((item): item is PaperCard => !!item)
     const message = chatStore.addMessage(searchText, mapped)
     if (!mapped.length) {
-      errorMsg.value = 'No results matched your query.'
+      errorMsg.value = t('chat.error.noResults')
     }
     selectedMessageId.value = message.id
     selectedPaperKey.value = mapped[0]?.key ?? null
@@ -113,7 +115,7 @@ async function runSearch(text?: string) {
       logRef.value.scrollTop = logRef.value.scrollHeight
     }
   } catch (error: any) {
-    errorMsg.value = error?.message || 'Search failed. Please try again.'
+    errorMsg.value = error?.message || t('chat.error.failed')
   } finally {
     loading.value = false
   }
@@ -171,7 +173,7 @@ watch(
   <div class="chat" :class="{ collapsed: useSetting.LeftTabHidden }">
     <div class="main-chat" :class="{ collapsed: useSetting.LeftTabHidden }">
       <div class="status" v-if="loading || errorMsg">
-        <span v-if="loading" class="status__loading">Searching...</span>
+        <span v-if="loading" class="status__loading">{{ t('chat.status.searching') }}</span>
         <span v-else class="status__error">{{ errorMsg }}</span>
       </div>
 
@@ -214,7 +216,7 @@ watch(
                     <span v-if="paper.sourceName" class="paper-card__source">{{
                       paper.sourceName
                     }}</span>
-                    <span v-if="paper.isOpenAccess" class="paper-card__badge">Open Access</span>
+                    <span v-if="paper.isOpenAccess" class="paper-card__badge">{{ t('chat.openAccess') }}</span>
                   </footer>
                 </article>
               </div>
@@ -223,8 +225,8 @@ watch(
                 <h3>{{ activePaper.title }}</h3>
                 <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
                 <div class="paper-preview__meta">
-                  <span v-if="activePaper.year">Year: {{ activePaper.year }}</span>
-                  <span v-if="activePaper.sourceName">Source: {{ activePaper.sourceName }}</span>
+                  <span v-if="activePaper.year">{{ t('chat.preview.year') }}: {{ activePaper.year }}</span>
+                  <span v-if="activePaper.sourceName">{{ t('chat.preview.source') }}: {{ activePaper.sourceName }}</span>
                 </div>
                 <div class="paper-preview__links">
                   <a
@@ -234,7 +236,7 @@ watch(
                     rel="noopener noreferrer"
                     class="btn btn--tiny"
                   >
-                    Open PDF
+                    {{ t('chat.link.openPdf') }}
                   </a>
                   <a
                     v-if="activePaper.landingUrl"
@@ -243,31 +245,31 @@ watch(
                     rel="noopener noreferrer"
                     class="btn btn--tiny"
                   >
-                    Article page
+                    {{ t('chat.link.articlePage') }}
                   </a>
                 </div>
               </aside>
             </div>
 
-            <p v-else class="no-results">No results captured for this query.</p>
+            <p v-else class="no-results">{{ t('chat.noResultsForTurn') }}</p>
           </section>
         </template>
         <div v-else class="empty-state">
-          <p>Start a new search to see results here.</p>
+          <p>{{ t('chat.empty') }}</p>
         </div>
       </div>
     </div>
 
     <form class="input-area" @submit.prevent="onSubmit">
-      <span v-if="searchBlocked" class="blocked-note">Search disabled for Admin/Moderator</span>
+      <span v-if="searchBlocked" class="blocked-note">{{ t('chat.blockedNote') }}</span>
       <input
         v-model="query"
         type="search"
-        placeholder="e.g. interpretable machine learning"
+        :placeholder="t('chat.input.placeholder')"
         :disabled="loading || searchBlocked"
       />
       <button class="btn btn-icon" type="submit" :disabled="loading || searchBlocked">
-        {{ searchBlocked ? 'Blocked' : (loading ? 'Searching...' : 'Search') }}
+        {{ searchBlocked ? t('chat.input.blocked') : (loading ? t('chat.input.searching') : t('chat.input.search')) }}
       </button>
     </form>
   </div>

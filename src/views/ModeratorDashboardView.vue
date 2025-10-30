@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
+import { useI18n } from '@/i18n'
 
 type Article = {
   id: string
@@ -15,6 +16,7 @@ type Article = {
 }
 
 const STORAGE_KEY = 'moderation.articles'
+const { t } = useI18n()
 const items = reactive<Article[]>([])
 const loaded = ref(false)
 
@@ -102,25 +104,25 @@ function remove(it: Article) {
 
   <div class="area" :class="{ collapsed: true }">
     <div class="container">
-      <h2>Moderator Panel</h2>
-      <p class="muted">Draft version using mock data</p>
+      <h2>{{ t('mod.title') }}</h2>
+      <p class="muted">{{ t('mod.draftNote') }}</p>
 
       <div class="list" v-if="items.length">
         <div class="card" v-for="it in items" :key="it.id">
           <div class="row head">
             <div class="meta">
               <h3>{{ it.title }}</h3>
-              <div class="sub">Author: {{ it.authorEmail }} • {{ it.year || '—' }}</div>
+              <div class="sub">{{ t('mod.meta.author') }}: {{ it.authorEmail }} • {{ it.year || '—' }}</div>
             </div>
             <div class="actions">
               <select v-model="it.status">
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
+                <option value="pending">{{ t('mod.status.pending') }}</option>
+                <option value="approved">{{ t('mod.status.approved') }}</option>
+                <option value="rejected">{{ t('mod.status.rejected') }}</option>
               </select>
-              <button class="btn" @click="setStatus(it, it.status)">Apply</button>
-              <button class="btn" @click="startEdit(it)" v-if="!it.editing">Edit</button>
-              <button class="btn danger" @click="remove(it)">Delete</button>
+              <button class="btn" @click="setStatus(it, it.status)">{{ t('common.apply') }}</button>
+              <button class="btn" @click="startEdit(it)" v-if="!it.editing">{{ t('common.edit') }}</button>
+              <button class="btn danger" @click="remove(it)">{{ t('common.delete') }}</button>
             </div>
           </div>
           <div class="body" v-if="!it.editing">
@@ -128,27 +130,27 @@ function remove(it: Article) {
           </div>
           <div class="editor" v-else>
             <label>
-              <span>Title</span>
+              <span>{{ t('paperAdd.title') }}</span>
               <input type="text" v-model="it.title" />
             </label>
             <label>
-              <span>Abstract</span>
+              <span>{{ t('paperAdd.abstract') }}</span>
               <textarea rows="4" v-model="it.abstract"></textarea>
             </label>
             <div class="row">
               <label>
-                <span>Year</span>
+                <span>{{ t('paperAdd.year') }}</span>
                 <input type="number" v-model="it.year" min="1900" max="2100" />
               </label>
               <div class="actions">
-                <button class="btn" @click="cancelEdit(it)">Cancel</button>
-                <button class="btn primary" @click="saveEdit(it)">Save</button>
+                <button class="btn" @click="cancelEdit(it)">{{ t('common.cancel') }}</button>
+                <button class="btn primary" @click="saveEdit(it)">{{ t('common.save') }}</button>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <p v-else class="muted">No papers to moderate</p>
+      <p v-else class="muted">{{ t('mod.noItems') }}</p>
     </div>
   </div>
 </template>

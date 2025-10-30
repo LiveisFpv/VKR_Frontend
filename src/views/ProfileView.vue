@@ -5,9 +5,11 @@ import UpTab from '@/components/UpTab.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingStore } from '@/stores/settingStore'
 import type { UserUpdateRequest } from '@/api/types'
+import { useI18n } from '@/i18n'
 
 const auth = useAuthStore()
 const useSetting = useSettingStore()
+const { t } = useI18n()
 
 onMounted(async () => {
   if (auth.isAuthenticated && !auth.User) {
@@ -107,15 +109,15 @@ async function saveProfile() {
   errorMsg.value = ''
   const payload = buildPayload()
   if (!Object.keys(payload).length) {
-    successMsg.value = 'Nothing to update'
+    successMsg.value = t('profile.msg.nothing')
     return
   }
   try {
     saving.value = true
     await auth.updateUser(payload)
-    successMsg.value = 'Profile updated'
+    successMsg.value = t('profile.msg.updated')
   } catch (e: any) {
-    errorMsg.value = e?.message || 'Failed to update profile'
+    errorMsg.value = e?.message || t('profile.msg.failed')
   } finally {
     saving.value = false
   }
@@ -134,27 +136,27 @@ async function saveProfile() {
             <span>{{ avatarLetter }}</span>
           </div>
           <div class="identity">
-            <h2 class="name">{{ fullName || 'Your profile' }}</h2>
+            <h2 class="name">{{ fullName || t('profile.title') }}</h2>
             <p class="muted" v-if="auth.User?.email">{{ auth.User?.email }}</p>
           </div>
         </div>
 
         <div class="meta" v-if="!editing">
           <div class="row">
-            <span class="label">Email confirmed</span>
+            <span class="label">{{ t('profile.emailConfirmed') }}</span>
             <span
               class="value"
               :class="{ ok: auth.User?.email_confirmed, warn: !auth.User?.email_confirmed }"
             >
-              {{ auth.User?.email_confirmed ? 'Yes' : 'No' }}
+              {{ auth.User?.email_confirmed ? t('common.yes') : t('common.no') }}
             </span>
           </div>
           <div class="row" v-if="auth.User?.locale_type">
-            <span class="label">Locale</span>
+            <span class="label">{{ t('profile.locale') }}</span>
             <span class="value">{{ auth.User?.locale_type }}</span>
           </div>
           <div class="row" v-if="auth.User?.roles?.length">
-            <span class="label">Roles</span>
+            <span class="label">{{ t('profile.roles') }}</span>
             <span class="value roles">
               <span v-for="r in auth.User?.roles" :key="r" class="chip">{{ r }}</span>
             </span>
@@ -169,20 +171,20 @@ async function saveProfile() {
               <input v-model="form.email" type="email" placeholder="Email" />
             </label>
             <label>
-              <span>First name</span>
-              <input v-model="form.first_name" type="text" placeholder="First name" />
+              <span>{{ t('profile.form.firstName') }}</span>
+              <input v-model="form.first_name" type="text" :placeholder="t('profile.form.firstName')" />
             </label>
             <label>
-              <span>Last name</span>
-              <input v-model="form.last_name" type="text" placeholder="Last name" />
+              <span>{{ t('profile.form.lastName') }}</span>
+              <input v-model="form.last_name" type="text" :placeholder="t('profile.form.lastName')" />
             </label>
             <label>
-              <span>Locale</span>
-              <input v-model="form.locale_type" type="text" placeholder="Locale (e.g. en, ru)" />
+              <span>{{ t('profile.form.locale') }}</span>
+              <input v-model="form.locale_type" type="text" :placeholder="t('profile.form.locale')" />
             </label>
             <label>
-              <span>New password</span>
-              <input v-model="form.password" type="password" placeholder="Leave blank to keep" />
+              <span>{{ t('profile.form.newPassword') }}</span>
+              <input v-model="form.password" type="password" :placeholder="t('profile.form.keepBlank')" />
             </label>
           </div>
           <div class="feedback">
@@ -190,20 +192,20 @@ async function saveProfile() {
             <span v-if="errorMsg" class="err">{{ errorMsg }}</span>
           </div>
           <div class="actions">
-            <button class="btn" :disabled="saving" @click="cancelEditing">Cancel</button>
+            <button class="btn" :disabled="saving" @click="cancelEditing">{{ t('profile.btn.cancel') }}</button>
             <button class="btn btn--primary" :disabled="saving" @click="saveProfile">
-              {{ saving ? 'Saving...' : 'Save changes' }}
+              {{ saving ? t('profile.saving') : t('profile.btn.save') }}
             </button>
           </div>
         </div>
 
         <div class="actions" v-if="!editing">
-          <button class="btn" @click="startEditing">Edit profile</button>
+          <button class="btn" @click="startEditing">{{ t('profile.btn.edit') }}</button>
           <button
             class="btn btn--primary"
             @click="auth.logout().then(() => $router.replace('/auth'))"
           >
-            Log out
+            {{ t('profile.btn.logout') }}
           </button>
         </div>
       </div>

@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from '@/i18n'
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 if (authStore.isAuthenticated) {
   router.replace('/')
 }
@@ -43,12 +45,12 @@ const onSubmit = async (e: Event) => {
   <div class="auth-view">
     <div class="card auth-card">
       <div class="login-view">
-        <h2 class="auth-title">{{ isLogin ? 'Log in' : 'Sign up' }}</h2>
+        <h2 class="auth-title">{{ isLogin ? t('auth.login') : t('auth.signup') }}</h2>
         <div class="auth-form">
-          <input type="email" placeholder="Email" class="input" autocomplete="email" id="email" />
+          <input type="email" :placeholder="t('auth.email')" class="input" autocomplete="email" id="email" />
           <input
             type="text"
-            placeholder="Lastname"
+            :placeholder="t('auth.lastname')"
             class="input"
             autocomplete="family-name"
             id="lastname"
@@ -56,7 +58,7 @@ const onSubmit = async (e: Event) => {
           />
           <input
             type="text"
-            placeholder="Firstname"
+            :placeholder="t('auth.firstname')"
             class="input"
             autocomplete="given-name"
             id="firstname"
@@ -64,40 +66,38 @@ const onSubmit = async (e: Event) => {
           />
           <input
             type="password"
-            placeholder="Password"
+            :placeholder="t('auth.password')"
             class="input"
             autocomplete="current-password"
             id="password"
           />
           <input
             type="password"
-            placeholder="Confirm Password"
+            :placeholder="t('auth.confirmPassword')"
             class="input"
             autocomplete="new-password"
             id="confirmpassword"
             v-if="!isLogin"
           />
           <button class="btn btn--primary" @click="onSubmit">
-            {{ isLogin ? 'Log in' : 'Sign up' }}
+            {{ isLogin ? t('auth.login') : t('auth.signup') }}
           </button>
-          <button class="btn btn-text">Forgot Password?</button>
+          <button class="btn btn-text">{{ t('auth.forgot') }}</button>
         </div>
         <div class="oauth">
           <button class="btn oauth-btn" @click="authStore.oauth('google', '/')">
             <img src="/src/assets/google-icon.svg" alt="Google" class="logo oauth-logo" />
-            <span>Continue with Google</span>
+            <span>{{ t('auth.continueGoogle') }}</span>
           </button>
           <button class="btn oauth-btn" @click="authStore.oauth('yandex', '/')">
             <img src="/src/assets/yandex-icon.svg" alt="Yandex" class="logo oauth-logo" />
-            <span>Continue with Yandex</span>
+            <span>{{ t('auth.continueYandex') }}</span>
           </button>
         </div>
         <div class="switch">
-          <span class="muted">{{
-            isLogin ? 'Don’t have an account?' : 'Already have an account?'
-          }}</span>
+          <span class="muted">{{ isLogin ? t('auth.noAccount') : t('auth.haveAccount') }}</span>
           <button class="btn btn-text" @click="Switch()">
-            {{ isLogin ? 'Create one' : 'Sign in' }}
+            {{ isLogin ? t('auth.createOne') : t('auth.signIn') }}
           </button>
         </div>
       </div>

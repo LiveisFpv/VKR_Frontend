@@ -1,9 +1,12 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useI18n } from '@/i18n'
+const { t } = useI18n()
+</script>
 <template>
   <div class="not-found">
-    <h1>404 - Page Not Found</h1>
-    <p>The page you are looking for does not exist.</p>
-    <a href="/">Go back to Home</a>
+    <h1>{{ t('notFound.title') }}</h1>
+    <p>{{ t('notFound.desc') }}</p>
+    <a href="/">{{ t('notFound.home') }}</a>
   </div>
 </template>
 <style lang="css" scoped>

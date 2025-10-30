@@ -6,9 +6,11 @@ import { SSOApi } from '@/api/useSSOApi'
 import type { UserResponse } from '@/api/types'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from '@/i18n'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const loading = ref(false)
 const errorMsg = ref('')
@@ -25,7 +27,7 @@ async function loadUsers() {
     const res = await SSOApi.getUsers()
     users.splice(0, users.length, ...res)
   } catch (e: any) {
-    errorMsg.value = e?.message || 'Failed to fetch users'
+    errorMsg.value = e?.message || t('admin.errFetch')
   } finally {
     loading.value = false
   }
@@ -63,16 +65,16 @@ async function saveUser(u: UserEditing) {
   <div class="area" :class="{ collapsed: true }">
     <div class="container">
       <div class="row">
-        <h2>Admin Panel</h2>
-        <button class="btn" @click="goModerator">Moderator Panel</button>
+        <h2>{{ t('admin.title') }}</h2>
+        <button class="btn" @click="goModerator">{{ t('admin.toModerator') }}</button>
       </div>
 
       <div class="panel">
         <div class="row">
-          <h3>Users</h3>
-          <button class="btn" @click="loadUsers" :disabled="loading">Refresh</button>
+          <h3>{{ t('admin.users') }}</h3>
+          <button class="btn" @click="loadUsers" :disabled="loading">{{ t('common.refresh') }}</button>
         </div>
-        <p class="muted" v-if="loading">Loading…</p>
+        <p class="muted" v-if="loading">{{ t('common.loading') }}</p>
         <p class="err" v-else-if="errorMsg">{{ errorMsg }}</p>
         <div class="table" v-else>
           <div class="thead">
@@ -102,15 +104,15 @@ async function saveUser(u: UserEditing) {
               />
             </div>
             <div class="actions">
-              <button class="btn" v-if="!u._editing" @click="startEdit(u)">Edit</button>
+              <button class="btn" v-if="!u._editing" @click="startEdit(u)">{{ t('common.edit') }}</button>
               <template v-else>
-                <button class="btn" @click="cancelEdit(u)">Cancel</button>
-                <button class="btn primary" @click="saveUser(u)">Save</button>
+                <button class="btn" @click="cancelEdit(u)">{{ t('common.cancel') }}</button>
+                <button class="btn primary" @click="saveUser(u)">{{ t('common.save') }}</button>
               </template>
             </div>
           </div>
         </div>
-        <p class="muted" v-if="!loading && !errorMsg && users.length === 0">No users</p>
+        <p class="muted" v-if="!loading && !errorMsg && users.length === 0">{{ t('admin.noUsers') }}</p>
       </div>
     </div>
   </div>

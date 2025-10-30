@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
 import { AlibApi } from '@/api/useAlibApi'
+import { useI18n } from '@/i18n'
 
 type Related = { id: string }
 type Referenced = { id: string }
@@ -19,6 +20,7 @@ const form = reactive({
 const saving = ref(false)
 const successMsg = ref('')
 const errorMsg = ref('')
+const { t } = useI18n()
 
 function addRelated() {
   form.related_paper.push({ id: '' })
@@ -37,7 +39,7 @@ async function submit() {
   successMsg.value = ''
   errorMsg.value = ''
   if (!form.title.trim()) {
-    errorMsg.value = 'Please provide a title'
+    errorMsg.value = t('paperAdd.errNoTitle')
     return
   }
   try {
@@ -54,7 +56,7 @@ async function submit() {
         .filter((r) => r.id.trim())
         .map((r) => ({ id: r.id.trim() })),
     })
-    successMsg.value = 'Paper submitted for moderation'
+    successMsg.value = t('paperAdd.okSubmitted')
     // reset minimal fields
     form.title = ''
     form.abstract = ''
@@ -62,7 +64,7 @@ async function submit() {
     form.related_paper = []
     form.referenced_paper = []
   } catch (e: any) {
-    errorMsg.value = e?.message || 'Failed to submit paper (mock/draft)'
+    errorMsg.value = e?.message || t('paperAdd.errSubmit')
   } finally {
     saving.value = false
   }
@@ -73,49 +75,49 @@ async function submit() {
   <LeftTab :hidden="true" />
   <div class="paper-add" :class="{ collapsed: true }">
     <div class="container">
-      <h2>Add Paper</h2>
+      <h2>{{ t('paperAdd.header') }}</h2>
       <form class="form" @submit.prevent="submit">
         <label>
-          <span>Title</span>
+          <span>{{ t('paperAdd.title') }}</span>
           <input type="text" v-model="form.title" placeholder="Enter a title" required />
         </label>
         <label>
-          <span>Abstract</span>
+          <span>{{ t('paperAdd.abstract') }}</span>
           <textarea v-model="form.abstract" rows="5" placeholder="Short description..."></textarea>
         </label>
         <div class="grid">
           <label>
-            <span>Year</span>
+            <span>{{ t('paperAdd.year') }}</span>
             <input type="number" v-model="form.year" min="1900" max="2100" />
           </label>
           <label>
-            <span>PDF/Source URL</span>
+            <span>{{ t('paperAdd.pdfSource') }}</span>
             <input type="text" v-model="form.best_oa_location" placeholder="https://..." />
           </label>
         </div>
 
         <div class="subsection">
           <div class="row">
-            <h3>Related Papers</h3>
-            <button type="button" class="btn" @click="addRelated">Add</button>
+            <h3>{{ t('paperAdd.related') }}</h3>
+            <button type="button" class="btn" @click="addRelated">{{ t('common.add') }}</button>
           </div>
           <div class="list" v-if="form.related_paper.length">
             <div class="item" v-for="(r, i) in form.related_paper" :key="i">
               <input type="text" v-model="r.id" placeholder="Paper ID" />
-              <button type="button" class="btn" @click="removeRelated(i)">Remove</button>
+              <button type="button" class="btn" @click="removeRelated(i)">{{ t('common.remove') }}</button>
             </div>
           </div>
         </div>
 
         <div class="subsection">
           <div class="row">
-            <h3>Referenced Papers</h3>
-            <button type="button" class="btn" @click="addReferenced">Add</button>
+            <h3>{{ t('paperAdd.referenced') }}</h3>
+            <button type="button" class="btn" @click="addReferenced">{{ t('common.add') }}</button>
           </div>
           <div class="list" v-if="form.referenced_paper.length">
             <div class="item" v-for="(r, i) in form.referenced_paper" :key="i">
               <input type="text" v-model="r.id" placeholder="Paper ID" />
-              <button type="button" class="btn" @click="removeReferenced(i)">Remove</button>
+              <button type="button" class="btn" @click="removeReferenced(i)">{{ t('common.remove') }}</button>
             </div>
           </div>
         </div>
@@ -127,7 +129,7 @@ async function submit() {
 
         <div class="actions">
           <button class="btn primary" type="submit" :disabled="saving">
-            {{ saving ? 'Submitting…' : 'Submit' }}
+            {{ saving ? t('common.submitting') : t('common.submit') }}
           </button>
         </div>
       </form>

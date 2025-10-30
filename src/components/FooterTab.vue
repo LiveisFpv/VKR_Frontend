@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { useSettingStore } from '@/stores/settingStore'
+import { useI18n } from '@/i18n'
 const useSetting = useSettingStore()
+const { t } = useI18n()
 </script>
 <template>
   <div class="footer" :class="{ collapsed: useSetting.LeftTabHidden }">
-    <p>© 2025 LiveisFPV Dev. All rights reserved.</p>
+    <p>{{ t('footer.copy') }}</p>
   </div>
 </template>
 <style lang="css" scoped>
@@ -27,3 +29,4 @@ p {
   margin: 0;
 }
 </style>
+

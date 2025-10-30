@@ -5,7 +5,9 @@ import { useSettingStore } from '@/stores/settingStore'
 import { useChatStore } from '@/stores/chatStore'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from '@/i18n'
 const authStore = useAuthStore()
+const { t } = useI18n()
 const router = useRouter()
 const useSetting = useSettingStore()
 const chatStore = useChatStore()
@@ -81,7 +83,7 @@ watch(
       >
         <div class="icon-text">
           <img src="/src/assets/papers-icon.svg" alt="|=|" class="logo" />
-          <p v-if="!leftTabHidden">Add Paper</p>
+          <p v-if="!leftTabHidden">{{ t('nav.addPaper') }}</p>
         </div>
       </button>
 
@@ -93,7 +95,7 @@ watch(
       >
         <div class="icon-text">
           <img src="/src/assets/papers-icon.svg" alt="M" class="logo" />
-          <p v-if="!leftTabHidden">Moderation</p>
+          <p v-if="!leftTabHidden">{{ t('nav.moderation') }}</p>
         </div>
       </button>
 
@@ -105,7 +107,7 @@ watch(
       >
         <div class="icon-text">
           <img src="/src/assets/manage-icon.svg" alt="A" class="logo" />
-          <p v-if="!leftTabHidden">Admin Panel</p>
+          <p v-if="!leftTabHidden">{{ t('nav.adminPanel') }}</p>
         </div>
       </button>
 
@@ -117,7 +119,7 @@ watch(
       >
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
-          <p v-if="!leftTabHidden">New search</p>
+          <p v-if="!leftTabHidden">{{ t('nav.newSearch') }}</p>
         </div>
       </button>
       <button
@@ -126,7 +128,7 @@ watch(
       >
         <div class="icon-text">
           <img src="/src/assets/search-icon.svg" alt="" class="logo" />
-          <p v-if="!leftTabHidden">Search chats</p>
+          <p v-if="!leftTabHidden">{{ t('nav.searchChats') }}</p>
         </div>
       </button>
     </div>
@@ -134,7 +136,7 @@ watch(
       class="menu history"
       v-if="!leftTabHidden && !(authStore.User && (authStore.isAdmin || authStore.isModerator))"
     >
-      <label for="menu" class="label">History</label>
+      <label for="menu" class="label">{{ t('nav.history') }}</label>
       <template v-if="chats.length">
         <button
           v-for="chat in chats"
@@ -146,13 +148,13 @@ watch(
           <span class="history-title">{{ chat.title }}</span>
         </button>
       </template>
-      <p v-else class="placeholder">No chats yet. Start a new search.</p>
+      <p v-else class="placeholder">{{ t('nav.noChats') }}</p>
     </div>
     <div class="footer">
       <button class="btn-menu btn" @click="RedirecttoSettings">
         <div class="icon-text">
           <img src="/src/assets/manage-icon.svg" alt="S" class="logo" />
-          <p v-if="!leftTabHidden">Settings</p>
+          <p v-if="!leftTabHidden">{{ t('nav.settings') }}</p>
         </div>
       </button>
     </div>
