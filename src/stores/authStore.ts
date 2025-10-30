@@ -69,9 +69,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
+      AccessToken.value = null
       const res = await SSOApi.logout()
     } finally {
-      AccessToken.value = null
     }
   }
   async function refreshToken() {

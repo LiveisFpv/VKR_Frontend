@@ -11,12 +11,15 @@ function RedirecttoProfile() {
 function RedirecttoAuth() {
   router.push('/auth')
 }
+
 const useSetting = useSettingStore()
 
 const props = defineProps<{
   showUpload?: boolean
   showMenu?: boolean
 }>()
+
+console.log(authStore.User?.roles)
 
 const showUpload = computed(() => props.showUpload ?? true)
 const showMenu = computed(() => props.showMenu ?? true)

@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
 import { useChatStore } from '@/stores/chatStore'
 import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/authStore'
+const authStore = useAuthStore()
 const router = useRouter()
 const useSetting = useSettingStore()
 const chatStore = useChatStore()
@@ -18,6 +20,9 @@ function RedirecttoSettings() {
 }
 function RedirecttoHome() {
   router.push('/')
+}
+function RedirecttoWriterCabinet() {
+  router.push('/writer')
 }
 
 function handleNewSearch() {
@@ -58,6 +63,16 @@ watch(
       </button>
     </div>
     <div class="menu">
+      <button
+        class="btn-menu btn"
+        v-if="authStore.User && authStore.User.roles?.includes('USER')"
+        @click="RedirecttoWriterCabinet"
+      >
+        <div class="icon-text">
+          <img src="/src/assets/papers-icon.svg" alt="|=|" class="logo" />
+          <p v-if="!leftTabHidden">MyPapers</p>
+        </div>
+      </button>
       <button class="btn-menu btn" @click="handleNewSearch">
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
