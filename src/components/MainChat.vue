@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useSettingStore } from '@/stores/settingStore'
+import { useAuthStore } from '@/stores/authStore'
 import { useChatStore, type PaperCard } from '@/stores/chatStore'
 import { AlibApi } from '@/api/useAlibApi'
 import type { PaperResponse } from '@/api/types'
 
 const useSetting = useSettingStore()
+const auth = useAuthStore()
 const chatStore = useChatStore()
 
 const query = ref('')
@@ -18,6 +20,7 @@ const logRef = ref<HTMLElement | null>(null)
 
 const messages = computed(() => chatStore.activeChat?.messages ?? [])
 const hasMessages = computed(() => messages.value.length > 0)
+const searchBlocked = computed(() => Boolean((auth as any).isAdmin?.value || (auth as any).isModerator?.value))
 
 const activeMessage = computed(() => {
   if (!selectedMessageId.value) return null
@@ -84,6 +87,10 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
 async function runSearch(text?: string) {
   const searchText = (text ?? query.value).trim()
   errorMsg.value = ''
+  if (searchBlocked.value) {
+    errorMsg.value = 'Search is disabled for your role.'
+    return
+  }
   if (!searchText) {
     errorMsg.value = 'Enter a query to search.'
     return
@@ -252,14 +259,15 @@ watch(
     </div>
 
     <form class="input-area" @submit.prevent="onSubmit">
+      <span v-if="searchBlocked" class="blocked-note">Search disabled for Admin/Moderator</span>
       <input
         v-model="query"
         type="search"
         placeholder="e.g. interpretable machine learning"
-        :disabled="loading"
+        :disabled="loading || searchBlocked"
       />
-      <button class="btn btn-icon" type="submit" :disabled="loading">
-        {{ loading ? 'Searching...' : 'Search' }}
+      <button class="btn btn-icon" type="submit" :disabled="loading || searchBlocked">
+        {{ searchBlocked ? 'Blocked' : (loading ? 'Searching...' : 'Search') }}
       </button>
     </form>
   </div>
@@ -505,6 +513,7 @@ watch(
 .input-area button {
   min-width: 120px;
 }
+.blocked-note { color: var(--color-danger); margin-left: 8px; }
 
 /* @media (max-width: 1200px) {
   .results-grid {

@@ -42,4 +42,8 @@ export const SSOApi = {
     const encodedRedirect = encodeURIComponent(`${FRONTEND_BASE_URL}${redirectPath}`)
     return `${api.defaults.baseURL}/oauth/${encodeURIComponent(provider)}?redirect_url=${encodedRedirect}`
   },
+  // Admin: fetch all users
+  getUsers() {
+    return api.get<UserResponse[]>('/auth/users').then((r) => r.data)
+  },
 }

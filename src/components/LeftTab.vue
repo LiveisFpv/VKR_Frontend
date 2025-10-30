@@ -22,7 +22,13 @@ function RedirecttoHome() {
   router.push('/')
 }
 function RedirecttoWriterCabinet() {
-  router.push('/writer')
+  router.push('/paper/add')
+}
+function RedirecttoAdmin() {
+  router.push('/admin')
+}
+function RedirecttoModerator() {
+  router.push('/moderator')
 }
 
 function handleNewSearch() {
@@ -63,30 +69,71 @@ watch(
       </button>
     </div>
     <div class="menu">
+      <!-- Author access -->
       <button
         class="btn-menu btn"
-        v-if="authStore.User && authStore.User.roles?.includes('USER')"
+        v-if="
+          authStore.User &&
+          authStore.isUserRole &&
+          !(authStore.User && (authStore.isAdmin || authStore.isModerator))
+        "
         @click="RedirecttoWriterCabinet"
       >
         <div class="icon-text">
           <img src="/src/assets/papers-icon.svg" alt="|=|" class="logo" />
-          <p v-if="!leftTabHidden">MyPapers</p>
+          <p v-if="!leftTabHidden">Add Paper</p>
         </div>
       </button>
-      <button class="btn-menu btn" @click="handleNewSearch">
+
+      <!-- Moderator access -->
+      <button
+        class="btn-menu btn"
+        v-if="authStore.User && authStore.isModerator"
+        @click="RedirecttoModerator"
+      >
+        <div class="icon-text">
+          <img src="/src/assets/papers-icon.svg" alt="M" class="logo" />
+          <p v-if="!leftTabHidden">Moderation</p>
+        </div>
+      </button>
+
+      <!-- Admin access -->
+      <button
+        class="btn-menu btn"
+        v-if="authStore.User && authStore.isAdmin"
+        @click="RedirecttoAdmin"
+      >
+        <div class="icon-text">
+          <img src="/src/assets/manage-icon.svg" alt="A" class="logo" />
+          <p v-if="!leftTabHidden">Admin Panel</p>
+        </div>
+      </button>
+
+      <!-- Search controls hidden for admin/moderator -->
+      <button
+        class="btn-menu btn"
+        @click="handleNewSearch"
+        v-if="!(authStore.User && (authStore.isAdmin || authStore.isModerator))"
+      >
         <div class="icon-text">
           <img src="/src/assets/plus-line-icon.svg" alt="" class="logo" />
           <p v-if="!leftTabHidden">New search</p>
         </div>
       </button>
-      <button class="btn-menu btn">
+      <button
+        class="btn-menu btn"
+        v-if="!(authStore.User && (authStore.isAdmin || authStore.isModerator))"
+      >
         <div class="icon-text">
           <img src="/src/assets/search-icon.svg" alt="" class="logo" />
           <p v-if="!leftTabHidden">Search chats</p>
         </div>
       </button>
     </div>
-    <div class="menu history" v-if="!leftTabHidden">
+    <div
+      class="menu history"
+      v-if="!leftTabHidden && !(authStore.User && (authStore.isAdmin || authStore.isModerator))"
+    >
       <label for="menu" class="label">History</label>
       <template v-if="chats.length">
         <button

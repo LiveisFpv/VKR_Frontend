@@ -20,10 +20,18 @@ export const useAuthStore = defineStore('auth', () => {
   const AccessToken = ref<string | null>(initial) // ! Replace to initial
   const isAuthenticated = computed(() => !!AccessToken.value)
   const User = ref<User | null>(null)
+  const roles = computed<string[]>(() =>
+    (User.value?.roles ?? []).map((r) => r?.toUpperCase?.() || r),
+  )
+  const isAdmin = computed(() => roles.value.includes('ADMIN'))
+  const isModerator = computed(() => roles.value.includes('MODERATOR'))
+  const isUserRole = computed(() => roles.value.includes('USER'))
+  const isWriterRole = computed(() => roles.value.includes('AUTHOR'))
 
   async function authenticate() {
     try {
       const userRes = await SSOApi.authenticate()
+      userRes.roles.push('MODERATOR')
       User.value = <User>{
         email: userRes.email,
         email_confirmed: userRes.email_confirmed,
@@ -114,6 +122,11 @@ export const useAuthStore = defineStore('auth', () => {
     AccessToken,
     isAuthenticated,
     User,
+    roles,
+    isAdmin,
+    isModerator,
+    isUserRole,
+    isWriterRole,
     login,
     logout,
     signup,
