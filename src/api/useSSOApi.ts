@@ -5,6 +5,8 @@ import type {
   UserUpdateRequest,
   UserResponse,
   TokenResReq,
+  UserListResponse,
+  UserListQuery,
 } from './types'
 import { FRONTEND_BASE_URL } from '@/config'
 
@@ -43,7 +45,7 @@ export const SSOApi = {
     return `${api.defaults.baseURL}/oauth/${encodeURIComponent(provider)}?redirect_url=${encodedRedirect}`
   },
   // Admin: fetch all users
-  getUsers() {
-    return api.get<UserResponse[]>('/auth/users').then((r) => r.data)
+  getUsers(params?: UserListQuery) {
+    return api.get<UserListResponse>('/auth/users', { params }).then((r) => r.data)
   },
 }

@@ -46,6 +46,24 @@ export interface UserUpdateRequest {
   password?: string
 }
 
+// Admin: list users response
+export interface UserListResponse {
+  items: UserResponse[]
+  limit: number
+  page: number
+  total: number
+}
+
+// Admin: list users query
+export interface UserListQuery {
+  q?: string
+  role?: string
+  email_confirmed?: boolean
+  locale?: string
+  page?: number
+  limit?: number
+}
+
 export interface PapersResponse {
   papers?: PaperResponse[]
 }
