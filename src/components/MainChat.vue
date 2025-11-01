@@ -22,7 +22,9 @@ const logRef = ref<HTMLElement | null>(null)
 
 const messages = computed(() => chatStore.activeChat?.messages ?? [])
 const hasMessages = computed(() => messages.value.length > 0)
-const searchBlocked = computed(() => Boolean((auth as any).isAdmin?.value || (auth as any).isModerator?.value))
+const searchBlocked = computed(() =>
+  Boolean((auth as any).isAdmin?.value || (auth as any).isModerator?.value),
+)
 
 const activeMessage = computed(() => {
   if (!selectedMessageId.value) return null
@@ -216,7 +218,9 @@ watch(
                     <span v-if="paper.sourceName" class="paper-card__source">{{
                       paper.sourceName
                     }}</span>
-                    <span v-if="paper.isOpenAccess" class="paper-card__badge">{{ t('chat.openAccess') }}</span>
+                    <span v-if="paper.isOpenAccess" class="paper-card__badge">{{
+                      t('chat.openAccess')
+                    }}</span>
                   </footer>
                 </article>
               </div>
@@ -225,8 +229,12 @@ watch(
                 <h3>{{ activePaper.title }}</h3>
                 <p class="paper-preview__abstract">{{ activePaper.abstract }}</p>
                 <div class="paper-preview__meta">
-                  <span v-if="activePaper.year">{{ t('chat.preview.year') }}: {{ activePaper.year }}</span>
-                  <span v-if="activePaper.sourceName">{{ t('chat.preview.source') }}: {{ activePaper.sourceName }}</span>
+                  <span v-if="activePaper.year"
+                    >{{ t('chat.preview.year') }}: {{ activePaper.year }}</span
+                  >
+                  <span v-if="activePaper.sourceName"
+                    >{{ t('chat.preview.source') }}: {{ activePaper.sourceName }}</span
+                  >
                 </div>
                 <div class="paper-preview__links">
                   <a
@@ -269,7 +277,13 @@ watch(
         :disabled="loading || searchBlocked"
       />
       <button class="btn btn-icon" type="submit" :disabled="loading || searchBlocked">
-        {{ searchBlocked ? t('chat.input.blocked') : (loading ? t('chat.input.searching') : t('chat.input.search')) }}
+        {{
+          searchBlocked
+            ? t('chat.input.blocked')
+            : loading
+              ? t('chat.input.searching')
+              : t('chat.input.search')
+        }}
       </button>
     </form>
   </div>
@@ -515,7 +529,10 @@ watch(
 .input-area button {
   min-width: 120px;
 }
-.blocked-note { color: var(--color-danger); margin-left: 8px; }
+.blocked-note {
+  color: var(--color-danger);
+  margin-left: 8px;
+}
 
 /* @media (max-width: 1200px) {
   .results-grid {
