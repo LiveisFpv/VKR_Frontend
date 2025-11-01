@@ -92,19 +92,6 @@ function chooseLang(l: 'en' | 'ru') {
       </section>
 
       <section class="card">
-        <h3>{{ t('settings.sidebar') }}</h3>
-        <div class="row">
-          <div class="toggle">
-            <input id="leftToggle" type="checkbox" :checked="leftHidden" @change="toggleLeftTab" />
-            <label for="leftToggle" class="toggle-track">
-              <span class="toggle-thumb"></span>
-            </label>
-            <span class="toggle-label">{{ t('settings.hideLeft') }}</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="card">
         <h3>{{ t('settings.language') }}</h3>
         <div class="option-grid">
           <button
@@ -167,7 +154,11 @@ function chooseLang(l: 'en' | 'ru') {
   border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
-  transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease, border-color var(--transition-fast) ease, background var(--transition-fast) ease;
+  transition:
+    transform var(--transition-fast) ease,
+    box-shadow var(--transition-fast) ease,
+    border-color var(--transition-fast) ease,
+    background var(--transition-fast) ease;
 }
 .option-card:hover {
   border-color: var(--color-primary-secondary);
@@ -184,8 +175,12 @@ function chooseLang(l: 'en' | 'ru') {
   border-radius: 8px;
   border: 1px solid var(--color-border);
 }
-.option-visual.theme-dark { background: #111; }
-.option-visual.theme-light { background: #fff; }
+.option-visual.theme-dark {
+  background: #111;
+}
+.option-visual.theme-light {
+  background: #fff;
+}
 .option-visual.lang {
   width: 38px;
   height: 32px;
@@ -249,7 +244,7 @@ function chooseLang(l: 'en' | 'ru') {
   height: 20px;
   border-radius: 50%;
   background: var(--color-surface);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: transform var(--transition-fast) ease;
 }
 .toggle input:checked + .toggle-track {
@@ -258,7 +253,9 @@ function chooseLang(l: 'en' | 'ru') {
 .toggle input:checked + .toggle-track .toggle-thumb {
   transform: translateX(20px);
 }
-.toggle-label { color: var(--color-text); }
+.toggle-label {
+  color: var(--color-text);
+}
 .muted {
   color: var(--color-muted);
   margin: 0;

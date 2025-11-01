@@ -534,7 +534,7 @@ watch(
   margin-left: 8px;
 }
 
-/* @media (max-width: 1200px) {
+@media (max-width: 1200px) {
   .results-grid {
     grid-template-columns: 1fr;
   }
@@ -542,33 +542,47 @@ watch(
     position: relative;
     top: auto;
     max-height: none;
+    margin-bottom: var(--space-3);
+    margin-top: var(--space-3);
   }
 }
 
-@media (max-width: 900px) {
-  .chat {
-    left: 20px;
-    right: 20px;
-    top: 100px;
+@media (max-width: 960px) {
+  .main-chat {
+    grid-template-rows: auto 1fr;
   }
-  .chat.collapsed {
-    left: 20px;
+  .results-grid {
+    gap: var(--space-3);
   }
-  .cards {
-    flex-direction: column;
+  .paper-preview {
+    box-shadow: none;
   }
 }
 
-@media (max-width: 640px) {
-  .chat {
+@media (max-width: 720px) {
+  .chat-turn {
     padding: var(--space-3);
-    grid-template-rows: auto auto;
+  }
+  .chat-turn__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1, 4px);
   }
   .paper-card {
     min-width: auto;
   }
-  .input-area button {
-    min-width: 80px;
+  .paper-preview__links {
+    flex-direction: column;
+    align-items: stretch;
   }
-} */
+  .input-area {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-2);
+  }
+  .input-area button {
+    width: 100%;
+    min-width: 0;
+  }
+}
 </style>

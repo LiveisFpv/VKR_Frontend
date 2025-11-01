@@ -25,11 +25,13 @@ const fullName = computed(() => {
   return [u.first_name, u.last_name].filter(Boolean).join(' ')
 })
 
+const avatarUrl = computed(() => auth.User?.photo || '')
+
 const avatarLetter = computed(() => {
   const u = auth.User
-  if (!u) return 'U'
-  const src = [u.first_name, u.last_name].filter(Boolean).join(' ')
-  return src ? (src.trim()[0]?.toUpperCase() ?? 'U') : 'U'
+  const name = [u?.first_name, u?.last_name].filter(Boolean).join(' ') || u?.email || ''
+  const trimmed = name.trim()
+  return trimmed ? trimmed[0].toUpperCase() : 'U'
 })
 
 // Edit form state
@@ -132,8 +134,13 @@ async function saveProfile() {
     <div class="container">
       <div class="card profile-card">
         <div class="profile-header">
-          <div class="avatar" aria-hidden="true">
-            <span>{{ avatarLetter }}</span>
+          <div class="avatar">
+            <img
+              v-if="avatarUrl"
+              :src="avatarUrl"
+              :alt="fullName || auth.User?.email || 'User avatar'"
+            />
+            <span v-else>{{ avatarLetter }}</span>
           </div>
           <div class="identity">
             <h2 class="name">{{ fullName || t('profile.title') }}</h2>
@@ -252,6 +259,12 @@ async function saveProfile() {
   justify-content: center;
   font-weight: 700;
   background: var(--color-surface);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .avatar span {
   font-size: 1.5rem;

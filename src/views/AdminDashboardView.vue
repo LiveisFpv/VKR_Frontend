@@ -7,6 +7,7 @@ import type { UserResponse, UserListResponse, UserUpdateRequest } from '@/api/ty
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
+import { useSettingStore } from '@/stores/settingStore'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -18,6 +19,8 @@ const users = reactive<UserResponse[]>([])
 const total = ref(0)
 const page = ref(1)
 const limit = ref(20)
+const setting = useSettingStore()
+const leftHidden = computed(() => setting.LeftTabHidden)
 
 const filters = reactive({
   q: '',
@@ -143,9 +146,9 @@ function changeLimit(val: number) {
 
 <template>
   <UpTab :show-menu="false" :show-upload="false" />
-  <LeftTab :hidden="true" />
+  <LeftTab />
 
-  <div class="area" :class="{ collapsed: true }">
+  <div class="area" :class="{ collapsed: leftHidden }">
     <div class="container">
       <div class="row">
         <h2>{{ t('admin.title') }}</h2>
@@ -221,7 +224,7 @@ function changeLimit(val: number) {
               />
             </div>
             <div>
-              <template v-if="!u._editing">—</template>
+              <template v-if="!u._editing">-</template>
               <input v-else type="password" v-model="(u as any)._password" placeholder="******" />
             </div>
             <div class="actions">
@@ -283,6 +286,7 @@ function changeLimit(val: number) {
   gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 .panel {
   display: grid;
@@ -294,7 +298,7 @@ function changeLimit(val: number) {
 }
 .filters {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
   align-items: center;
 }
@@ -308,6 +312,7 @@ function changeLimit(val: number) {
 .table {
   display: grid;
   gap: 8px;
+  overflow-x: auto;
 }
 .thead,
 .rowdata {
@@ -315,6 +320,7 @@ function changeLimit(val: number) {
   grid-template-columns: 2fr 1fr 1fr 0.8fr 0.8fr 0.8fr 1.5fr 1.2fr auto;
   gap: 8px;
   align-items: center;
+  min-width: 960px;
 }
 .thead {
   font-weight: 600;
@@ -353,6 +359,7 @@ select {
 .actions {
   display: inline-flex;
   gap: 8px;
+  flex-wrap: wrap;
   justify-content: flex-end;
 }
 .pager {
@@ -361,4 +368,49 @@ select {
   align-items: center;
   justify-content: flex-end;
 }
+/*
+@media (max-width: 1200px) {
+  .container {
+    max-width: 100%;
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (max-width: 1024px) {
+  .area,
+  .area.collapsed {
+    position: static;
+    inset: auto;
+    margin: calc(60px + var(--space-3)) var(--space-3) var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .filters {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .pager {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .area,
+  .area.collapsed {
+    margin: calc(60px + var(--space-2)) var(--space-2) var(--space-3);
+  }
+  .panel {
+    padding: var(--space-2);
+  }
+}*/
 </style>

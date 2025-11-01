@@ -63,11 +63,26 @@ watch(
 <template>
   <div class="left-tab" :class="{ hidden: leftTabHidden }">
     <div class="header" :class="{ hidden: leftTabHidden }">
-      <button class="btn btn-icon" @click="RedirecttoHome" aria-label="Home">
+      <button class="btn btn-icon" type="button" @click="RedirecttoHome" aria-label="Home">
         <img src="/src/assets/book-logo.svg" alt="L" class="logo" />
       </button>
-      <button class="btn btn-icon" @click="toggleLeftTab" aria-label="Toggle sidebar">
-        {{ leftTabHidden ? '→' : '←' }}
+      <button
+        class="btn btn-icon sidebar-toggle"
+        type="button"
+        @click="toggleLeftTab"
+        :aria-expanded="!leftTabHidden"
+        aria-label="Toggle sidebar"
+      >
+        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+          <path
+            d="M4 2l4 4-4 4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </button>
     </div>
     <div class="menu">
@@ -309,6 +324,15 @@ watch(
   width: 1.2em;
   height: 1.2em;
 }
+.sidebar-toggle .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--transition-fast) ease;
+  transform: rotate(180deg);
+}
+.left-tab.hidden .sidebar-toggle .chevron {
+  transform: rotate(0deg);
+}
 .footer {
   margin-top: auto;
   display: flex;
@@ -316,3 +340,4 @@ watch(
   padding: 10px 0;
 }
 </style>
+

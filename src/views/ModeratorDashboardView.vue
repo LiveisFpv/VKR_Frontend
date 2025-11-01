@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
 import { useI18n } from '@/i18n'
+import { useSettingStore } from '@/stores/settingStore'
 
 type Article = {
   id: string
@@ -19,6 +20,8 @@ const STORAGE_KEY = 'moderation.articles'
 const { t } = useI18n()
 const items = reactive<Article[]>([])
 const loaded = ref(false)
+const setting = useSettingStore()
+const leftHidden = computed(() => setting.LeftTabHidden)
 
 function saveLocal() {
   try {
@@ -100,9 +103,9 @@ function remove(it: Article) {
 
 <template>
   <UpTab :show-menu="false" :show-upload="false" />
-  <LeftTab :hidden="true" />
+  <LeftTab />
 
-  <div class="area" :class="{ collapsed: true }">
+  <div class="area" :class="{ collapsed: leftHidden }">
     <div class="container">
       <h2>{{ t('mod.title') }}</h2>
       <p class="muted">{{ t('mod.draftNote') }}</p>
@@ -112,7 +115,9 @@ function remove(it: Article) {
           <div class="row head">
             <div class="meta">
               <h3>{{ it.title }}</h3>
-              <div class="sub">{{ t('mod.meta.author') }}: {{ it.authorEmail }} • {{ it.year || '—' }}</div>
+              <div class="sub">
+                {{ t('mod.meta.author') }}: {{ it.authorEmail }} - {{ it.year || '-' }}
+              </div>
             </div>
             <div class="actions">
               <select v-model="it.status">
@@ -121,7 +126,9 @@ function remove(it: Article) {
                 <option value="rejected">{{ t('mod.status.rejected') }}</option>
               </select>
               <button class="btn" @click="setStatus(it, it.status)">{{ t('common.apply') }}</button>
-              <button class="btn" @click="startEdit(it)" v-if="!it.editing">{{ t('common.edit') }}</button>
+              <button class="btn" @click="startEdit(it)" v-if="!it.editing">
+                {{ t('common.edit') }}
+              </button>
               <button class="btn danger" @click="remove(it)">{{ t('common.delete') }}</button>
             </div>
           </div>
@@ -191,6 +198,7 @@ function remove(it: Article) {
   gap: var(--space-2);
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 .head .meta h3 {
   margin: 0;
@@ -227,6 +235,8 @@ textarea {
 .actions {
   display: inline-flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .btn {
   border: 1px solid var(--color-border);
@@ -251,4 +261,45 @@ select {
   background: var(--color-surface);
   color: var(--color-text);
 }
+
+/* @media (max-width: 1200px) {
+  .container {
+    max-width: 100%;
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (max-width: 1024px) {
+  .area,
+  .area.collapsed {
+    position: static;
+    inset: auto;
+    margin: calc(60px + var(--space-3)) var(--space-3) var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .head .actions {
+    justify-content: flex-start;
+  }
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .area,
+  .area.collapsed {
+    margin: calc(60px + var(--space-2)) var(--space-2) var(--space-3);
+  }
+  .card {
+    padding: var(--space-2);
+  }
+} */
 </style>

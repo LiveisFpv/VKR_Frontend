@@ -21,17 +21,28 @@ const props = defineProps<{
   showMenu?: boolean
 }>()
 
-console.log(authStore.User?.roles)
-
 const showUpload = computed(() => props.showUpload ?? true)
 const showMenu = computed(() => props.showMenu ?? true)
+const avatarUrl = computed(() => authStore.User?.photo || '')
+const avatarLetter = computed(() => {
+  const user = authStore.User
+  const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email || ''
+  const trimmed = name.trim()
+  return trimmed ? trimmed[0].toUpperCase() : 'U'
+})
 </script>
 <template>
   <div class="up-tab" :class="{ collapsed: useSetting.LeftTabHidden }">
     <img class="logo" src="/src/assets/logo.svg" style="width: auto; height: 40px" />
     <div class="button-group">
-      <button class="btn avatar" @click="RedirecttoProfile" v-if="authStore.isAuthenticated">
-        U
+      <button
+        class="btn avatar"
+        @click="RedirecttoProfile"
+        v-if="authStore.isAuthenticated"
+        :aria-label="t('profile.title')"
+      >
+        <img v-if="avatarUrl" :src="avatarUrl" alt="" class="avatar-image" />
+        <span v-else>{{ avatarLetter }}</span>
       </button>
       <button class="btn btn-icon" v-if="showUpload">
         <img class="logo" src="/src/assets/upload-icon.svg" />
@@ -104,6 +115,12 @@ const showMenu = computed(() => props.showMenu ?? true)
   font-weight: 600;
   font-size: 1em;
   line-height: 1;
+}
+.btn.avatar .avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .btn.avatar:hover {
   border-color: var(--color-primary);
