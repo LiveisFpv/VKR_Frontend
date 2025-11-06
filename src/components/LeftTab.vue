@@ -153,15 +153,17 @@ watch(
     >
       <label for="menu" class="label">{{ t('nav.history') }}</label>
       <template v-if="chats.length">
-        <button
+        <div
+          class="history-elem"
           v-for="chat in chats"
           :key="chat.id"
-          class="btn-menu btn history-item"
           :class="{ active: chat.id === activeChatId }"
-          @click="selectChat(chat.id)"
         >
-          <span class="history-title">{{ chat.title }}</span>
-        </button>
+          <button class="btn-history btn" @click="selectChat(chat.id)">
+            <span class="history-title">{{ chat.title }}</span>
+          </button>
+          <button class="btn-icon btn-history btn">&ctdot;</button>
+        </div>
       </template>
       <p v-else class="placeholder">{{ t('nav.noChats') }}</p>
     </div>
@@ -237,7 +239,7 @@ watch(
 }
 .menu.history {
   align-items: stretch;
-  gap: 8px;
+  gap: 4px;
 }
 .label {
   align-self: flex-start;
@@ -246,6 +248,7 @@ watch(
   padding-left: 16px;
   color: var(--color-text-secondary);
 }
+
 .btn-menu {
   text-align: left;
   font-size: medium;
@@ -277,6 +280,81 @@ watch(
   gap: 4px;
   border-color: transparent;
 }
+
+.history-elem {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  border-color: transparent;
+  margin-right: 5px;
+
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--color-bg-secondary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.history-elem:hover {
+  border-color: var(--color-border);
+  background: color-mix(in oklab, var(--color-surface), var(--color-text) 3%);
+}
+
+.history-elem.active {
+  transform: translateY(1px);
+  border-color: var(--color-primary-secondary);
+}
+
+.history-elem:active {
+  transform: translateY(2px);
+}
+
+.history-elem .btn-history:first-child {
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+.history-elem .btn-history:last-child {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+}
+
+.history-elem .btn-history:last-child:hover {
+  background: color-mix(in oklab, var(--color-surface), var(--color-text) 5%);
+}
+
+.history-elem .btn-icon,
+.history-elem .btn-history,
+.history-elem .btn {
+  border: 0px !important;
+}
+
+.history-elem .btn-icon:active,
+.history-elem .btn-history:active,
+.history-elem .btn:active {
+  transform: translateY(0px) !important;
+}
+
+.btn-history {
+  text-align: left;
+  font-size: medium;
+  width: 100%;
+  appearance: none;
+  border: 1px solid var(--color-bg-secondary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
 .history-item .history-title {
   font-size: 0.95rem;
   line-height: 1.2;
@@ -340,4 +418,3 @@ watch(
   padding: 10px 0;
 }
 </style>
-

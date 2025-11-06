@@ -22,7 +22,7 @@ const props = defineProps<{
 }>()
 
 const showUpload = computed(() => props.showUpload ?? true)
-const showMenu = computed(() => props.showMenu ?? true)
+// const showMenu = computed(() => props.showMenu ?? true)
 const avatarUrl = computed(() => authStore.User?.photo || '')
 const avatarLetter = computed(() => {
   const user = authStore.User
@@ -47,7 +47,7 @@ const avatarLetter = computed(() => {
       <button class="btn btn-icon" v-if="showUpload">
         <img class="logo" src="/src/assets/upload-icon.svg" />
       </button>
-      <button class="btn btn-icon" v-if="showMenu">&ctdot;</button>
+      <!-- <button class="btn btn-icon" v-if="showMenu">&ctdot;</button> -->
       <button class="btn btn-icon" @click="RedirecttoAuth" v-if="!authStore.isAuthenticated">
         {{ t('auth.login') }}
       </button>
