@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
 import { useChatStore } from '@/stores/chatStore'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 const authStore = useAuthStore()
 const { t } = useI18n()
 const router = useRouter()
@@ -28,9 +29,6 @@ function RedirecttoSettings() {
 }
 function RedirecttoHome() {
   router.push('/')
-}
-function RedirecttoWriterCabinet() {
-  router.push('/paper/add')
 }
 function RedirecttoMyPapers() {
   router.push('/paper/my')
@@ -68,6 +66,120 @@ watch(
   },
   { immediate: true },
 )
+
+const openHistoryMenuId = ref<string | null>(null)
+const isDeleteDialogOpen = ref(false)
+const deleteCandidateId = ref<string | null>(null)
+
+function getChatById(chatId: string) {
+  return chats.value.find((item) => item.id === chatId)
+}
+
+function toggleHistoryMenu(chatId: string) {
+  openHistoryMenuId.value = openHistoryMenuId.value === chatId ? null : chatId
+}
+
+function closeHistoryMenu() {
+  openHistoryMenuId.value = null
+}
+
+function handleOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  if (target.closest('[data-history-menu]')) return
+  closeHistoryMenu()
+}
+
+async function copyToClipboard(text: string) {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      // Fallback to legacy approach below if clipboard API fails
+    }
+  }
+  if (typeof document === 'undefined') return false
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  const succeeded = document.execCommand('copy')
+  document.body.removeChild(textarea)
+  return succeeded
+}
+
+async function handleShareChat(chatId: string) {
+  const chat = getChatById(chatId)
+  if (!chat || typeof window === 'undefined') return
+  const route = router.resolve({ path: '/', query: { chat: chatId } })
+  const { origin } = window.location
+  let url = route.href
+  try {
+    url = new URL(route.href, origin).toString()
+  } catch {
+    url = `${origin}${route.href}`
+  }
+  const copied = await copyToClipboard(url)
+  closeHistoryMenu()
+  window.alert(copied ? t('history.copyOk') : t('history.copyFail'))
+}
+
+function handleRenameChat(chatId: string) {
+  const chat = getChatById(chatId)
+  if (!chat || typeof window === 'undefined') return
+  const nextTitle = window.prompt(t('history.renamePrompt'), chat.title)
+  if (nextTitle === null) return
+  const renamed = chatStore.renameChat(chatId, nextTitle)
+  if (!renamed) {
+    if (!nextTitle.trim()) {
+      window.alert(t('history.renameValidation'))
+    }
+    return
+  }
+  closeHistoryMenu()
+}
+
+function requestDeleteChat(chatId: string) {
+  const chat = getChatById(chatId)
+  if (!chat) return
+  deleteCandidateId.value = chatId
+  isDeleteDialogOpen.value = true
+  closeHistoryMenu()
+}
+
+function handleDeleteCancel() {
+  isDeleteDialogOpen.value = false
+  deleteCandidateId.value = null
+}
+
+function handleDeleteConfirm() {
+  const chatId = deleteCandidateId.value
+  if (!chatId) {
+    isDeleteDialogOpen.value = false
+    return
+  }
+  const wasActive = activeChatId.value === chatId
+  const deleted = chatStore.deleteChat(chatId)
+  deleteCandidateId.value = null
+  isDeleteDialogOpen.value = false
+  if (!deleted) return
+  if (wasActive) {
+    router.push('/')
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
 </script>
 <template>
   <div class="left-tab" :class="{ hidden: leftTabHidden }">
@@ -164,12 +276,57 @@ watch(
           class="history-elem"
           v-for="chat in chats"
           :key="chat.id"
-          :class="{ active: chat.id === activeChatId }"
+          :class="{
+            active: chat.id === activeChatId,
+            'menu-open': openHistoryMenuId === chat.id,
+          }"
+          data-history-menu
         >
-          <button class="btn-history btn" @click="selectChat(chat.id)">
+          <button class="btn-history btn" type="button" @click="selectChat(chat.id)">
             <span class="history-title">{{ chat.title }}</span>
           </button>
-          <button class="btn-icon btn-history btn">&ctdot;</button>
+          <button
+            class="btn-icon btn-history btn"
+            type="button"
+            @click.stop="toggleHistoryMenu(chat.id)"
+            :aria-expanded="openHistoryMenuId === chat.id"
+            aria-haspopup="menu"
+            :aria-label="t('history.menu.more')"
+          >
+            &ctdot;
+          </button>
+          <ul v-if="openHistoryMenuId === chat.id" class="history-menu" role="menu" @click.stop>
+            <li role="none">
+              <button
+                type="button"
+                class="history-menu-item"
+                role="menuitem"
+                @click="handleShareChat(chat.id)"
+              >
+                {{ t('history.menu.share') }}
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                class="history-menu-item"
+                role="menuitem"
+                @click="handleRenameChat(chat.id)"
+              >
+                {{ t('history.menu.rename') }}
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                class="history-menu-item destructive"
+                role="menuitem"
+                @click="requestDeleteChat(chat.id)"
+              >
+                {{ t('history.menu.delete') }}
+              </button>
+            </li>
+          </ul>
         </div>
       </template>
       <p v-else class="placeholder">{{ t('nav.noChats') }}</p>
@@ -182,6 +339,15 @@ watch(
         </div>
       </button>
     </div>
+    <ConfirmDialog
+      v-model="isDeleteDialogOpen"
+      :title="t('history.deletePromptTitle')"
+      :message="t('history.deleteConfirm')"
+      :confirm-text="t('common.delete')"
+      :cancel-text="t('common.cancel')"
+      @confirm="handleDeleteConfirm"
+      @cancel="handleDeleteCancel"
+    />
   </div>
 </template>
 <style lang="css" scoped>
@@ -293,8 +459,11 @@ watch(
   display: flex;
   justify-content: space-between;
   flex-direction: row;
+  align-items: stretch;
+  gap: 0;
   border-color: transparent;
   margin-right: 5px;
+  z-index: 0;
 
   width: 100%;
   appearance: none;
@@ -321,6 +490,66 @@ watch(
 
 .history-elem:active {
   transform: translateY(2px);
+}
+
+.history-elem.menu-open {
+  z-index: 50;
+}
+
+.history-actions {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: var(--radius-md);
+  border: 0px;
+}
+
+.history-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown, 0 8px 16px rgba(15, 23, 42, 0.15));
+  z-index: 100;
+}
+
+.history-menu-item {
+  width: 100%;
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.history-menu-item:hover,
+.history-menu-item:focus-visible {
+  background: color-mix(in oklab, var(--color-surface), var(--color-text) 6%);
+  outline: none;
+}
+
+.history-menu-item.destructive {
+  color: var(--color-danger, #d14343);
+}
+
+.history-menu-item.destructive:hover,
+.history-menu-item.destructive:focus-visible {
+  background: color-mix(in oklab, var(--color-surface), var(--color-danger, #d14343) 12%);
+  color: var(--color-danger, #d14343);
 }
 
 .history-elem .btn-history:first-child {

@@ -83,6 +83,27 @@ export const useChatStore = defineStore('chat', () => {
     return message
   }
 
+  function renameChat(id: string, nextTitle: string) {
+    const chat = chats.value.find((item) => item.id === id)
+    if (!chat) return false
+    const title = nextTitle.trim()
+    if (!title) return false
+    chat.title = title
+    return true
+  }
+
+  function deleteChat(id: string) {
+    const index = chats.value.findIndex((item) => item.id === id)
+    if (index === -1) return false
+    const nextChats = [...chats.value]
+    nextChats.splice(index, 1)
+    chats.value = nextChats
+    if (activeChatId.value === id) {
+      activeChatId.value = chats.value[0]?.id ?? null
+    }
+    return true
+  }
+
   return {
     chats,
     history,
@@ -91,5 +112,7 @@ export const useChatStore = defineStore('chat', () => {
     createChat,
     setActiveChat,
     addMessage,
+    renameChat,
+    deleteChat,
   }
 })
