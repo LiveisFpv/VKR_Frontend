@@ -3,13 +3,13 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import LeftTab from '@/components/LeftTab.vue'
 import UpTab from '@/components/UpTab.vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useSettingStore } from '@/stores/settingStore'
 import type { UserUpdateRequest } from '@/api/types'
 import { useI18n } from '@/i18n'
+import { useLayoutInset } from '@/composables/useLayoutInset'
 
 const auth = useAuthStore()
-const useSetting = useSettingStore()
 const { t } = useI18n()
+const { LeftTabHidden: leftHidden, layoutInset } = useLayoutInset()
 
 onMounted(async () => {
   if (auth.isAuthenticated && !auth.User) {
@@ -130,7 +130,11 @@ async function saveProfile() {
   <UpTab :show-menu="false" :show-upload="false" />
   <LeftTab :hidden="true" />
 
-  <div class="profile-area" :class="{ collapsed: useSetting.LeftTabHidden }">
+  <div
+    class="profile-area"
+    :class="{ collapsed: leftHidden }"
+    :style="{ '--layout-inset': layoutInset }"
+  >
     <div class="container">
       <div class="card profile-card">
         <div class="profile-header">
@@ -223,14 +227,14 @@ async function saveProfile() {
 <style lang="css" scoped>
 .profile-area {
   position: fixed;
-  inset: 60px 20px 20px 310px;
+  inset: var(--layout-inset, 60px 20px 20px 310px);
   display: grid;
   align-items: start;
   transition: all var(--transition-slow) ease;
 }
 
 .profile-area.collapsed {
-  inset: 60px 20px 20px 120px;
+  --layout-inset: 60px 20px 20px 80px;
 }
 
 .container {

@@ -8,6 +8,8 @@ const SettingsView = () => import('@/views/SettingsView.vue')
 const SearchView = () => import('@/views/SearchView.vue')
 const PaperView = () => import('@/views/PaperView.vue')
 const PaperAddView = () => import('@/views/PaperAddView.vue')
+const MyPapersView = () => import('@/views/MyPapersView.vue')
+const PaperEditView = () => import('@/views/PaperEditView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
 const AdminDashboardView = () => import('@/views/AdminDashboardView.vue')
 const ModeratorDashboardView = () => import('@/views/ModeratorDashboardView.vue')
@@ -20,8 +22,24 @@ const router = createRouter({
     { path: '/profile', component: ProfileView, meta: { requiresAuth: true } },
     { path: '/settings', component: SettingsView, meta: { requiresAuth: true } },
     { path: '/search/:uid', component: SearchView },
+    {
+      path: '/paper/my',
+      name: 'my-papers',
+      component: MyPapersView,
+      meta: { requiresAuth: true, roles: ['USER', 'AUTHOR'] },
+    },
+    {
+      path: '/paper/:id/edit',
+      name: 'paper-edit',
+      component: PaperEditView,
+      meta: { requiresAuth: true, roles: ['USER', 'AUTHOR'] },
+    },
     { path: '/paper/:uid', component: PaperView },
-    { path: '/paper/add', component: PaperAddView, meta: { requiresAuth: true, roles: ['USER'] } },
+    {
+      path: '/paper/add',
+      component: PaperAddView,
+      meta: { requiresAuth: true, roles: ['USER', 'AUTHOR'] },
+    },
     {
       path: '/admin',
       component: AdminDashboardView,

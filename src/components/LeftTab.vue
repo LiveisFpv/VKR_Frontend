@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
 import { useChatStore } from '@/stores/chatStore'
@@ -9,13 +9,19 @@ import { useI18n } from '@/i18n'
 const authStore = useAuthStore()
 const { t } = useI18n()
 const router = useRouter()
-const useSetting = useSettingStore()
+const settingStore = useSettingStore()
 const chatStore = useChatStore()
 const { history: chats, activeChatId } = storeToRefs(chatStore)
-const leftTabHidden = ref(useSetting.LeftTabHidden)
+const { LeftTabHidden } = storeToRefs(settingStore)
+const leftTabHidden = LeftTabHidden
+const canAuthorAccess = computed(
+  () =>
+    !!authStore.User &&
+    (authStore.isUserRole || authStore.isWriterRole) &&
+    !(authStore.isAdmin || authStore.isModerator),
+)
 function toggleLeftTab() {
-  useSetting.HideLeftTab()
-  leftTabHidden.value = useSetting.LeftTabHidden
+  settingStore.HideLeftTab()
 }
 function RedirecttoSettings() {
   router.push('/settings')
@@ -25,6 +31,9 @@ function RedirecttoHome() {
 }
 function RedirecttoWriterCabinet() {
   router.push('/paper/add')
+}
+function RedirecttoMyPapers() {
+  router.push('/paper/my')
 }
 function RedirecttoAdmin() {
   router.push('/admin')
@@ -48,13 +57,13 @@ const props = defineProps<{
   hidden?: boolean
 }>()
 
-const hidden = computed(() => props.hidden ?? null)
+const hidden = computed(() => props.hidden)
 
 watch(
   hidden,
   (val) => {
-    if (val != leftTabHidden.value) {
-      toggleLeftTab()
+    if (typeof val === 'boolean' && val !== LeftTabHidden.value) {
+      LeftTabHidden.value = val
     }
   },
   { immediate: true },
@@ -87,18 +96,16 @@ watch(
     </div>
     <div class="menu">
       <!-- Author access -->
-      <button
-        class="btn-menu btn"
-        v-if="
-          authStore.User &&
-          authStore.isUserRole &&
-          !(authStore.User && (authStore.isAdmin || authStore.isModerator))
-        "
-        @click="RedirecttoWriterCabinet"
-      >
+      <!-- <button class="btn-menu btn" v-if="canAuthorAccess" @click="RedirecttoWriterCabinet">
         <div class="icon-text">
           <img src="/src/assets/papers-icon.svg" alt="|=|" class="logo" />
           <p v-if="!leftTabHidden">{{ t('nav.addPaper') }}</p>
+        </div>
+      </button> -->
+      <button class="btn-menu btn" v-if="canAuthorAccess" @click="RedirecttoMyPapers">
+        <div class="icon-text">
+          <img src="/src/assets/papers-icon.svg" alt="|=|" class="logo" />
+          <p v-if="!leftTabHidden">{{ t('nav.myPapers') }}</p>
         </div>
       </button>
 

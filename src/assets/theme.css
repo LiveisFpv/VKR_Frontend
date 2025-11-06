@@ -55,6 +55,12 @@
 
   /* Layout */
   --container-max: 1100px;
+
+  /* Scrollbar */
+  --scrollbar-size: 8px;
+  --scrollbar-track: color-mix(in oklab, var(--color-bg), black 4%);
+  --scrollbar-thumb: color-mix(in oklab, var(--color-text), transparent 75%);
+  --scrollbar-thumb-hover: color-mix(in oklab, var(--color-text), transparent 65%);
 }
 
 :root[data-theme='dark'] {
@@ -82,4 +88,8 @@
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 12px 24px rgba(0, 0, 0, 0.35);
+
+  --scrollbar-track: color-mix(in oklab, var(--color-bg-secondary), white 6%);
+  --scrollbar-thumb: color-mix(in oklab, var(--color-text-secondary), transparent 60%);
+  --scrollbar-thumb-hover: color-mix(in oklab, var(--color-text-secondary), transparent 40%);
 }

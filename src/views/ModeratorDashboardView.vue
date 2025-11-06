@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
 import { useI18n } from '@/i18n'
-import { useSettingStore } from '@/stores/settingStore'
+import { useLayoutInset } from '@/composables/useLayoutInset'
 
 type Article = {
   id: string
@@ -20,8 +20,7 @@ const STORAGE_KEY = 'moderation.articles'
 const { t } = useI18n()
 const items = reactive<Article[]>([])
 const loaded = ref(false)
-const setting = useSettingStore()
-const leftHidden = computed(() => setting.LeftTabHidden)
+const { LeftTabHidden: leftHidden, layoutInset } = useLayoutInset()
 
 function saveLocal() {
   try {
@@ -105,7 +104,7 @@ function remove(it: Article) {
   <UpTab :show-menu="false" :show-upload="false" />
   <LeftTab />
 
-  <div class="area" :class="{ collapsed: leftHidden }">
+  <div class="area" :class="{ collapsed: leftHidden }" :style="{ '--layout-inset': layoutInset }">
     <div class="container">
       <h2>{{ t('mod.title') }}</h2>
       <p class="muted">{{ t('mod.draftNote') }}</p>
@@ -165,11 +164,11 @@ function remove(it: Article) {
 <style scoped>
 .area {
   position: fixed;
-  inset: 60px 20px 20px 310px;
+  inset: var(--layout-inset, 60px 20px 20px 310px);
   transition: all var(--transition-slow) ease;
 }
 .area.collapsed {
-  inset: 60px 20px 20px 120px;
+  --layout-inset: 60px 20px 20px 80px;
 }
 .container {
   max-width: 1000px;

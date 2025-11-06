@@ -7,7 +7,7 @@ import type { UserResponse, UserListResponse, UserUpdateRequest } from '@/api/ty
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
-import { useSettingStore } from '@/stores/settingStore'
+import { useLayoutInset } from '@/composables/useLayoutInset'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -19,8 +19,7 @@ const users = reactive<UserResponse[]>([])
 const total = ref(0)
 const page = ref(1)
 const limit = ref(20)
-const setting = useSettingStore()
-const leftHidden = computed(() => setting.LeftTabHidden)
+const { LeftTabHidden: leftHidden, layoutInset } = useLayoutInset()
 
 const filters = reactive({
   q: '',
@@ -148,7 +147,7 @@ function changeLimit(val: number) {
   <UpTab :show-menu="false" :show-upload="false" />
   <LeftTab />
 
-  <div class="area" :class="{ collapsed: leftHidden }">
+  <div class="area" :class="{ collapsed: leftHidden }" :style="{ '--layout-inset': layoutInset }">
     <div class="container">
       <div class="row">
         <h2>{{ t('admin.title') }}</h2>
@@ -269,11 +268,11 @@ function changeLimit(val: number) {
 <style scoped>
 .area {
   position: fixed;
-  inset: 60px 20px 20px 310px;
+  inset: var(--layout-inset, 60px 20px 20px 310px);
   transition: all var(--transition-slow) ease;
 }
 .area.collapsed {
-  inset: 60px 20px 20px 120px;
+  --layout-inset: 60px 20px 20px 80px;
 }
 .container {
   max-width: 1100px;

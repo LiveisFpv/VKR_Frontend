@@ -4,13 +4,14 @@ import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
 import { useSettingStore } from '@/stores/settingStore'
 import { useI18n } from '@/i18n'
+import { useLayoutInset } from '@/composables/useLayoutInset'
 
 type Theme = 'light' | 'dark'
 const THEME_KEY = 'theme'
 
 const setting = useSettingStore()
+const { LeftTabHidden: leftHidden, layoutInset } = useLayoutInset()
 const { locale, setLocale, t } = useI18n()
-const leftHidden = computed(() => setting.LeftTabHidden)
 
 const theme = ref<Theme>('dark')
 
@@ -59,7 +60,11 @@ function chooseLang(l: 'en' | 'ru') {
   <UpTab :show-menu="false" :show-upload="false" />
   <LeftTab :hidden="true" />
 
-  <div class="settings-area" :class="{ collapsed: true }">
+  <div
+    class="settings-area"
+    :class="{ collapsed: leftHidden }"
+    :style="{ '--layout-inset': layoutInset }"
+  >
     <div class="container">
       <h2>{{ t('settings.title') }}</h2>
 
@@ -125,11 +130,11 @@ function chooseLang(l: 'en' | 'ru') {
 <style scoped>
 .settings-area {
   position: fixed;
-  inset: 60px 20px 20px 310px;
+  inset: var(--layout-inset, 60px 20px 20px 310px);
   transition: all var(--transition-slow) ease;
 }
 .settings-area.collapsed {
-  inset: 60px 20px 20px 120px;
+  --layout-inset: 60px 20px 20px 80px;
 }
 .container {
   max-width: 800px;
