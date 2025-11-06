@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
@@ -12,6 +12,11 @@ if (authStore.isAuthenticated) {
 }
 const loginorsignup = ref('login')
 const isLogin = computed(() => loginorsignup.value === 'login')
+const isResetSubmitting = ref(false)
+const isResetOpen = ref(false)
+const resetEmail = ref('')
+const resetMessage = ref('')
+const resetError = ref('')
 function Switch() {
   console.log('loginorsignup.value: ', loginorsignup.value)
   if (loginorsignup.value == 'login') {
@@ -19,6 +24,22 @@ function Switch() {
   } else {
     loginorsignup.value = 'login'
   }
+}
+const openResetDialog = async (e: Event) => {
+  e.preventDefault()
+  resetMessage.value = ''
+  resetError.value = ''
+  const emailInput = document.getElementById('email') as HTMLInputElement | null
+  resetEmail.value = emailInput?.value?.trim() ?? ''
+  isResetOpen.value = true
+  await nextTick()
+  ;(document.getElementById('reset-email') as HTMLInputElement | null)?.focus()
+}
+const closeResetDialog = () => {
+  if (isResetSubmitting.value) return
+  isResetOpen.value = false
+  resetMessage.value = ''
+  resetError.value = ''
 }
 const onSubmit = async (e: Event) => {
   e.preventDefault()
@@ -40,6 +61,31 @@ const onSubmit = async (e: Event) => {
     }
   }
 }
+const onForgotPassword = async (e?: Event) => {
+  e?.preventDefault()
+  resetMessage.value = ''
+  resetError.value = ''
+  const email = resetEmail.value.trim()
+  if (!email) {
+    resetError.value = t('auth.resetEmailRequired')
+    return
+  }
+  isResetSubmitting.value = true
+  try {
+    await authStore.requestPasswordReset(email)
+    resetMessage.value = t('auth.resetSuccess')
+  } catch (error) {
+    const fallback = t('auth.resetFailed')
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errMessage = (error as { message?: string }).message
+      resetError.value = errMessage || fallback
+    } else {
+      resetError.value = fallback
+    }
+  } finally {
+    isResetSubmitting.value = false
+  }
+}
 </script>
 <template>
   <div class="auth-view">
@@ -47,7 +93,13 @@ const onSubmit = async (e: Event) => {
       <div class="login-view">
         <h2 class="auth-title">{{ isLogin ? t('auth.login') : t('auth.signup') }}</h2>
         <div class="auth-form">
-          <input type="email" :placeholder="t('auth.email')" class="input" autocomplete="email" id="email" />
+          <input
+            type="email"
+            :placeholder="t('auth.email')"
+            class="input"
+            autocomplete="email"
+            id="email"
+          />
           <input
             type="text"
             :placeholder="t('auth.lastname')"
@@ -82,7 +134,14 @@ const onSubmit = async (e: Event) => {
           <button class="btn btn--primary" @click="onSubmit">
             {{ isLogin ? t('auth.login') : t('auth.signup') }}
           </button>
-          <button class="btn btn-text">{{ t('auth.forgot') }}</button>
+          <button
+            class="btn btn-text"
+            type="button"
+            :disabled="isResetSubmitting"
+            @click="openResetDialog"
+          >
+            {{ t('auth.forgot') }}
+          </button>
         </div>
         <div class="oauth">
           <button class="btn oauth-btn" @click="authStore.oauth('google', '/')">
@@ -100,6 +159,43 @@ const onSubmit = async (e: Event) => {
             {{ isLogin ? t('auth.createOne') : t('auth.signIn') }}
           </button>
         </div>
+      </div>
+    </div>
+    <div v-if="isResetOpen" class="reset-modal-overlay" @click.self="closeResetDialog">
+      <div class="reset-modal" role="dialog" aria-modal="true">
+        <h3 class="reset-title">{{ t('auth.resetTitle') }}</h3>
+        <p class="reset-description">{{ t('auth.resetDescription') }}</p>
+        <form class="reset-form" @submit.prevent="onForgotPassword()">
+          <label class="reset-label" for="reset-email">{{ t('auth.email') }}</label>
+          <input
+            id="reset-email"
+            v-model="resetEmail"
+            type="email"
+            class="input"
+            :placeholder="t('auth.email')"
+            autocomplete="email"
+            required
+          />
+          <p v-if="resetMessage" class="reset-feedback reset-feedback--success">
+            {{ resetMessage }}
+          </p>
+          <p v-if="resetError" class="reset-feedback reset-feedback--error">
+            {{ resetError }}
+          </p>
+          <div class="reset-actions">
+            <button
+              class="btn"
+              type="button"
+              :disabled="isResetSubmitting"
+              @click="closeResetDialog"
+            >
+              {{ resetMessage ? t('auth.resetClose') : t('auth.resetCancel') }}
+            </button>
+            <button class="btn btn--primary" type="submit" :disabled="isResetSubmitting">
+              {{ isResetSubmitting ? t('common.loading') : t('auth.resetSubmit') }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -191,5 +287,65 @@ const onSubmit = async (e: Event) => {
   line-height: 1.2;
   display: inline-flex;
   align-items: baseline;
+}
+
+.reset-feedback {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.reset-feedback--success {
+  color: var(--color-success, #10b981);
+}
+
+.reset-feedback--error {
+  color: var(--color-danger, #ef4444);
+}
+
+.reset-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  z-index: 1000;
+}
+
+.reset-modal {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  width: min(420px, 100%);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.reset-title {
+  margin: 0;
+}
+
+.reset-description {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.reset-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.reset-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.reset-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 </style>

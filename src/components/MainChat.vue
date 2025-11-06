@@ -82,8 +82,8 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
     abstract: abstract || t('chat.noAbstract'),
     year: paper.year,
     pdfUrl: best?.pdf_url,
-    landingUrl: best?.landing_page_url,
-    isOpenAccess: best?.is_oa,
+    landingUrl: best?.landing_page_url || paper.best_oa_location, // Надо что-то подумать
+    isOpenAccess: best?.is_oa || paper.best_oa_location != '',
     sourceName: best?.source?.display_name,
   }
 }

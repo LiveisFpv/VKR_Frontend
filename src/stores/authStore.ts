@@ -8,6 +8,7 @@ import type {
   UserResponse,
   TokenResReq,
   User,
+  PasswordResetRequest,
 } from '@/api/types'
 export const useAuthStore = defineStore('auth', () => {
   const STORAGE_KEY = 'auth.access_token'
@@ -91,6 +92,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function requestPasswordReset(email: string) {
+    const payload = <PasswordResetRequest>{
+      email,
+    }
+    return SSOApi.passwordReset(payload)
+  }
+
   async function updateUser(payload: UserUpdateRequest) {
     const updated = await SSOApi.updateUser(payload)
     User.value = <User>{
@@ -134,5 +142,6 @@ export const useAuthStore = defineStore('auth', () => {
     authenticate,
     oauth,
     updateUser,
+    requestPasswordReset,
   }
 })

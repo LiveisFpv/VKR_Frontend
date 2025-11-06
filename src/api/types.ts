@@ -14,6 +14,14 @@ export interface UserRegisterRequest {
   password: string
 }
 
+export interface PasswordResetRequest {
+  email: string
+}
+
+export interface PasswordResetResponse {
+  message?: string
+}
+
 export interface UserResponse {
   email: string
   email_confirmed: boolean

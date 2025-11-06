@@ -7,6 +7,8 @@ import type {
   TokenResReq,
   UserListResponse,
   UserListQuery,
+  PasswordResetRequest,
+  PasswordResetResponse,
 } from './types'
 import { FRONTEND_BASE_URL } from '@/config'
 
@@ -25,6 +27,9 @@ export const SSOApi = {
   },
   create(payload: UserRegisterRequest) {
     return api.post<UserResponse>('/auth/create', payload).then((r) => r.data)
+  },
+  passwordReset(payload: PasswordResetRequest) {
+    return api.post<PasswordResetResponse>('/auth/password-reset', payload).then((r) => r.data)
   },
   // Explicitly named user update method
   updateUser(payload: UserUpdateRequest) {
