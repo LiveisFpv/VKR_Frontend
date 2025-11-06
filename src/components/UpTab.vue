@@ -1,9 +1,14 @@
 <script lang="ts" setup>
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingStore } from '@/stores/settingStore'
-import { computed } from 'vue'
+import { useChatStore } from '@/stores/chatStore'
+import { useToastStore } from '@/stores/toastStore'
 import { useI18n } from '@/i18n'
+import ToastCenter from '@/components/ToastCenter.vue'
+import { copyToClipboard } from '@/utils/copyToClipboard'
 const authStore = useAuthStore()
 const router = useRouter()
 function RedirecttoProfile() {
@@ -15,6 +20,8 @@ function RedirecttoAuth() {
 
 const useSetting = useSettingStore()
 const { t } = useI18n()
+const chatStore = useChatStore()
+const toastStore = useToastStore()
 
 const props = defineProps<{
   showUpload?: boolean
@@ -30,6 +37,29 @@ const avatarLetter = computed(() => {
   const trimmed = name.trim()
   return trimmed ? trimmed[0].toUpperCase() : 'U'
 })
+
+const { activeChatId } = storeToRefs(chatStore)
+
+async function handleCopyActiveChat() {
+  if (typeof window === 'undefined') return
+  const chatId = activeChatId.value
+  if (!chatId) {
+    toastStore.show(t('history.copyNoChat'), { variant: 'error' })
+    return
+  }
+  const route = router.resolve({ path: '/', query: { chat: chatId } })
+  const { origin } = window.location
+  let url = route.href
+  try {
+    url = new URL(route.href, origin).toString()
+  } catch {
+    url = `${origin}${route.href}`
+  }
+  const copied = await copyToClipboard(url)
+  toastStore.show(copied ? t('history.copyOk') : t('history.copyFail'), {
+    variant: copied ? 'success' : 'error',
+  })
+}
 </script>
 <template>
   <div class="up-tab" :class="{ collapsed: useSetting.LeftTabHidden }">
@@ -44,7 +74,13 @@ const avatarLetter = computed(() => {
         <img v-if="avatarUrl" :src="avatarUrl" alt="" class="avatar-image" />
         <span v-else>{{ avatarLetter }}</span>
       </button>
-      <button class="btn btn-icon" v-if="showUpload">
+      <button
+        class="btn btn-icon"
+        type="button"
+        v-if="showUpload"
+        @click="handleCopyActiveChat"
+        :aria-label="t('history.menu.share')"
+      >
         <img class="logo" src="/src/assets/upload-icon.svg" />
       </button>
       <!-- <button class="btn btn-icon" v-if="showMenu">&ctdot;</button> -->
@@ -56,6 +92,7 @@ const avatarLetter = computed(() => {
       </button>
     </div>
   </div>
+  <ToastCenter />
 </template>
 <style lang="css" scoped>
 .up-tab {

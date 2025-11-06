@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, watch, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, watch, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/stores/settingStore'
 import { useChatStore } from '@/stores/chatStore'
@@ -7,11 +7,14 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import { useToastStore } from '@/stores/toastStore'
+import { copyToClipboard } from '@/utils/copyToClipboard'
 const authStore = useAuthStore()
 const { t } = useI18n()
 const router = useRouter()
 const settingStore = useSettingStore()
 const chatStore = useChatStore()
+const toastStore = useToastStore()
 const { history: chats, activeChatId } = storeToRefs(chatStore)
 const { LeftTabHidden } = storeToRefs(settingStore)
 const leftTabHidden = LeftTabHidden
@@ -41,12 +44,14 @@ function RedirecttoModerator() {
 }
 
 function handleNewSearch() {
+  cancelInlineRename()
   const chat = chatStore.createChat()
   router.push('/')
   chatStore.setActiveChat(chat.id)
 }
 
 function selectChat(id: string) {
+  cancelInlineRename()
   chatStore.setActiveChat(id)
   router.push('/')
 }
@@ -70,6 +75,9 @@ watch(
 const openHistoryMenuId = ref<string | null>(null)
 const isDeleteDialogOpen = ref(false)
 const deleteCandidateId = ref<string | null>(null)
+const editingChatId = ref<string | null>(null)
+const editTitle = ref('')
+const editInputRef = ref<HTMLInputElement | null>(null)
 
 function getChatById(chatId: string) {
   return chats.value.find((item) => item.id === chatId)
@@ -90,29 +98,6 @@ function handleOutsideClick(event: MouseEvent) {
   closeHistoryMenu()
 }
 
-async function copyToClipboard(text: string) {
-  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text)
-      return true
-    } catch {
-      // Fallback to legacy approach below if clipboard API fails
-    }
-  }
-  if (typeof document === 'undefined') return false
-  const textarea = document.createElement('textarea')
-  textarea.value = text
-  textarea.setAttribute('readonly', '')
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  document.body.appendChild(textarea)
-  textarea.focus()
-  textarea.select()
-  const succeeded = document.execCommand('copy')
-  document.body.removeChild(textarea)
-  return succeeded
-}
-
 async function handleShareChat(chatId: string) {
   const chat = getChatById(chatId)
   if (!chat || typeof window === 'undefined') return
@@ -126,22 +111,49 @@ async function handleShareChat(chatId: string) {
   }
   const copied = await copyToClipboard(url)
   closeHistoryMenu()
-  window.alert(copied ? t('history.copyOk') : t('history.copyFail'))
+  toastStore.show(copied ? t('history.copyOk') : t('history.copyFail'), {
+    variant: copied ? 'success' : 'error',
+  })
 }
 
-function handleRenameChat(chatId: string) {
+function startInlineRename(chatId: string) {
   const chat = getChatById(chatId)
-  if (!chat || typeof window === 'undefined') return
-  const nextTitle = window.prompt(t('history.renamePrompt'), chat.title)
-  if (nextTitle === null) return
-  const renamed = chatStore.renameChat(chatId, nextTitle)
-  if (!renamed) {
-    if (!nextTitle.trim()) {
-      window.alert(t('history.renameValidation'))
-    }
+  if (!chat) return
+  editingChatId.value = chatId
+  editTitle.value = chat.title
+  closeHistoryMenu()
+  nextTick(() => {
+    editInputRef.value?.focus()
+    editInputRef.value?.select()
+  })
+}
+
+function cancelInlineRename() {
+  editingChatId.value = null
+  editTitle.value = ''
+}
+
+function submitInlineRename(chatId: string) {
+  const chat = getChatById(chatId)
+  if (!chat) {
+    cancelInlineRename()
     return
   }
-  closeHistoryMenu()
+  const renamed = chatStore.renameChat(chatId, editTitle.value)
+  if (!renamed) {
+    toastStore.show(t('history.renameValidation'), { variant: 'error' })
+    nextTick(() => {
+      editInputRef.value?.focus()
+      editInputRef.value?.select()
+    })
+    return
+  }
+  cancelInlineRename()
+}
+
+function handleRenameBlur(chatId: string) {
+  if (editingChatId.value !== chatId) return
+  submitInlineRename(chatId)
 }
 
 function requestDeleteChat(chatId: string) {
@@ -282,7 +294,22 @@ onBeforeUnmount(() => {
           }"
           data-history-menu
         >
-          <button class="btn-history btn" type="button" @click="selectChat(chat.id)">
+          <form
+            v-if="editingChatId === chat.id"
+            class="history-edit"
+            @submit.prevent="submitInlineRename(chat.id)"
+          >
+            <input
+              ref="editInputRef"
+              v-model="editTitle"
+              type="text"
+              class="history-edit-input"
+              :placeholder="t('history.renamePrompt')"
+              @blur="handleRenameBlur(chat.id)"
+              @keydown.esc.prevent="cancelInlineRename"
+            />
+          </form>
+          <button v-else class="btn-history btn" type="button" @click="selectChat(chat.id)">
             <span class="history-title">{{ chat.title }}</span>
           </button>
           <button
@@ -311,7 +338,7 @@ onBeforeUnmount(() => {
                 type="button"
                 class="history-menu-item"
                 role="menuitem"
-                @click="handleRenameChat(chat.id)"
+                @click="startInlineRename(chat.id)"
               >
                 {{ t('history.menu.rename') }}
               </button>
@@ -473,14 +500,14 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition:
-    background var(--transition-base),
+    /* background var(--transition-base), */
     border-color var(--transition-base),
     transform var(--transition-fast);
 }
 
 .history-elem:hover {
   border-color: var(--color-border);
-  background: color-mix(in oklab, var(--color-surface), var(--color-text) 3%);
+  /* background: color-mix(in oklab, var(--color-surface), var(--color-text) 3%); */
 }
 
 .history-elem.active {
@@ -502,6 +529,42 @@ onBeforeUnmount(() => {
   align-items: stretch;
   border-radius: var(--radius-md);
   border: 0px;
+}
+
+.history-edit {
+  appearance: none;
+  margin: 0px;
+  padding: 0px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.history-edit-input {
+  appearance: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  cursor: text;
+  height: 100%;
+  border: 0px;
+  width: 100%;
+  text-align: left;
+  font-size: medium;
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  padding: 0.55rem 0.9rem;
+  background: color-mix(in oklab, var(--color-surface), var(--color-text) 6%);
+}
+
+.history-edit-input:focus-visible {
+  outline: none;
+}
+
+.history-edit-input::placeholder {
+  color: var(--color-text-secondary);
 }
 
 .history-menu {
@@ -557,12 +620,12 @@ onBeforeUnmount(() => {
   border-bottom-right-radius: 0px;
 }
 
-.history-elem .btn-history:last-child {
+.history-elem .btn-history:nth-child(2) {
   border-top-left-radius: 0px;
   border-bottom-left-radius: 0px;
 }
 
-.history-elem .btn-history:last-child:hover {
+.history-elem .btn-history:nth-child(2):hover {
   background: color-mix(in oklab, var(--color-surface), var(--color-text) 5%);
 }
 
