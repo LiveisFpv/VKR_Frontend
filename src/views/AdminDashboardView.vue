@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import UpTab from '@/components/UpTab.vue'
 import LeftTab from '@/components/LeftTab.vue'
 import { SSOApi } from '@/api/useSSOApi'
-import type { UserResponse, UserListResponse, UserUpdateRequest } from '@/api/types'
+import type { UserResponse, UserListResponse, UserUpdateRequestWithRoles } from '@/api/types'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useI18n } from '@/i18n'
@@ -89,13 +89,16 @@ async function saveUser(u: UserEditing) {
         .map((r) => r.trim())
         .filter(Boolean)
     }
-    const payload: UserUpdateRequest = {}
+    // Always include roles to satisfy admin update schema
+    const payload: UserUpdateRequestWithRoles = { roles: u.roles ?? [] }
     if (u.first_name) payload.first_name = u.first_name
     if (u.last_name) payload.last_name = u.last_name
     if (u.locale_type) payload.locale_type = u.locale_type
     if (u._password) payload.password = u._password
-    // Use existing PUT endpoint
-    const updated = await SSOApi.updateUser(payload)
+    const userId = u.id
+    if (typeof userId !== 'number') throw new Error('Missing user id')
+    // Call admin update endpoint with id
+    const updated = await SSOApi.updateUserwithRoles(userId, payload)
     // reflect returned fields
     u.first_name = updated.first_name
     u.last_name = updated.last_name

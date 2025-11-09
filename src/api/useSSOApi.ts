@@ -9,6 +9,7 @@ import type {
   UserListQuery,
   PasswordResetRequest,
   PasswordResetResponse,
+  UserUpdateRequestWithRoles,
 } from './types'
 import { FRONTEND_BASE_URL } from '@/config'
 
@@ -51,6 +52,11 @@ export const SSOApi = {
   },
   // Admin: fetch all users
   getUsers(params?: UserListQuery) {
-    return api.get<UserListResponse>('/auth/users', { params }).then((r) => r.data)
+    return api.get<UserListResponse>('/auth/admin/users', { params }).then((r) => r.data)
+  },
+  updateUserwithRoles(id: number, payload: UserUpdateRequestWithRoles) {
+    return api
+      .put<UserResponse>(`/auth/admin/users/${id}` as const, payload)
+      .then((r) => r.data)
   },
 }

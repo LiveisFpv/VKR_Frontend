@@ -23,6 +23,7 @@ export interface PasswordResetResponse {
 }
 
 export interface UserResponse {
+  id?: number
   email: string
   email_confirmed: boolean
   first_name: string
@@ -33,6 +34,7 @@ export interface UserResponse {
 }
 
 export interface User {
+  id?: number
   email: string
   email_confirmed: boolean
   first_name: string
@@ -52,6 +54,15 @@ export interface UserUpdateRequest {
   last_name?: string
   locale_type?: string
   password?: string
+}
+
+export interface UserUpdateRequestWithRoles {
+  email?: string
+  first_name?: string
+  last_name?: string
+  locale_type?: string
+  password?: string
+  roles?: string[]
 }
 
 // Admin: list users response

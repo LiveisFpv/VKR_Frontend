@@ -32,7 +32,6 @@ export const useAuthStore = defineStore('auth', () => {
   async function authenticate() {
     try {
       const userRes = await SSOApi.authenticate()
-      // userRes.roles.push('ADMIN') // !
       User.value = <User>{
         email: userRes.email,
         email_confirmed: userRes.email_confirmed,
