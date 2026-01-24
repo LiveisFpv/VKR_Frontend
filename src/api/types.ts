@@ -83,6 +83,36 @@ export interface UserListQuery {
   limit?: number
 }
 
+export interface CreateChatRequest {
+  user_id?: number
+  title: string
+}
+
+export interface ChatResponse {
+  chat_id: number
+  user_id: number
+  updated_at: string
+  title: string
+}
+
+export interface ChatsResponse {
+  chats: ChatResponse[]
+}
+
+export interface ChatHistoryCreateRequest {
+  text: string
+}
+
+export interface ChatHistoryMessage {
+  search_query: string
+  created_at: string
+  papers: PaperResponse[]
+}
+
+export interface ChatHistoryResponse {
+  chat_messages: ChatHistoryMessage[]
+}
+
 export interface PapersResponse {
   papers?: PaperResponse[]
 }

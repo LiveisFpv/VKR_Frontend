@@ -88,7 +88,7 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
   }
 }
 
-async function runSearch(text?: string) {
+async function runSearch(chat_id: number, text?: string) {
   const searchText = (text ?? query.value).trim()
   errorMsg.value = ''
   if (searchBlocked.value) {
@@ -102,7 +102,7 @@ async function runSearch(text?: string) {
   query.value = searchText
   loading.value = true
   try {
-    const response = await AlibApi.search(searchText)
+    const response = await AlibApi.search(searchText, chat_id)
     const mapped = (response.papers ?? [])
       .map((paper, index) => toPaperCard(paper, index))
       .filter((item): item is PaperCard => !!item)
