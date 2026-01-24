@@ -106,6 +106,7 @@ export interface ChatHistoryCreateRequest {
 export interface ChatHistoryMessage {
   search_query: string
   created_at: string
+  updated_at?: string
   papers: PaperResponse[]
 }
 

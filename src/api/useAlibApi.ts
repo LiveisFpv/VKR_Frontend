@@ -25,10 +25,10 @@ export const AlibApi = {
     const payload = <CreateChatRequest>{
       title: chat_name,
     }
-    return api.post<ChatResponse>(`/chats`, payload).then((r) => r.data)
+    return api.post<ChatResponse>(`/chats/`, payload).then((r) => r.data)
   },
   get_all_user_chats() {
-    return api.get<ChatsResponse>(`/chats`).then((r) => r.data)
+    return api.get<ChatsResponse>(`/chats/`).then((r) => r.data)
   },
   addPaper(payload: AddPaperRequest) {
     return api.post<void>('/ai/paper/add', payload).then((r) => r.data)

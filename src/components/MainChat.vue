@@ -15,6 +15,7 @@ const { t } = useI18n()
 const query = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
+const isChatsLoading = ref(false)
 
 const selectedMessageId = ref<string | null>(null)
 const selectedPaperKey = ref<string | null>(null)
@@ -46,6 +47,17 @@ function formatTime(ts: number) {
   return timeFormatter.format(new Date(ts))
 }
 
+function toTimestamp(value?: string | number | null) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
+  }
+  if (typeof value === 'string' && value) {
+    const parsed = Date.parse(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
 function normalizeBestLocation(raw: unknown): Record<string, any> | null {
   if (!raw) return null
   if (typeof raw === 'object') {
@@ -70,6 +82,15 @@ function normalizeBestLocation(raw: unknown): Record<string, any> | null {
   return null
 }
 
+const CHAT_TITLE_MAX = 60
+
+function buildChatTitle(raw: string) {
+  const normalized = raw.replace(/\s+/g, ' ').trim()
+  if (!normalized) return 'New search'
+  if (normalized.length <= CHAT_TITLE_MAX) return normalized
+  return `${normalized.slice(0, CHAT_TITLE_MAX).trimEnd()}...`
+}
+
 function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
   const title = paper.title?.trim()
   const abstract = paper.abstract?.trim()
@@ -88,7 +109,15 @@ function toPaperCard(paper: PaperResponse, index: number): PaperCard | null {
   }
 }
 
-async function runSearch(chat_id: number, text?: string) {
+async function ensureActiveChat(searchText: string) {
+  if (chatStore.activeChatId) return chatStore.activeChatId
+  const title = buildChatTitle(searchText)
+  const created = await AlibApi.create_chat(title)
+  const chat = chatStore.upsertChatFromApi(created)
+  return chat.id
+}
+
+async function runSearch(text?: string) {
   const searchText = (text ?? query.value).trim()
   errorMsg.value = ''
   if (searchBlocked.value) {
@@ -102,11 +131,15 @@ async function runSearch(chat_id: number, text?: string) {
   query.value = searchText
   loading.value = true
   try {
-    const response = await AlibApi.search(searchText, chat_id)
+    const chatId = await ensureActiveChat(searchText)
+    const response = await AlibApi.search(searchText, chatId)
     const mapped = (response.papers ?? [])
       .map((paper, index) => toPaperCard(paper, index))
       .filter((item): item is PaperCard => !!item)
-    const message = chatStore.addMessage(searchText, mapped)
+    const message = chatStore.addMessage(chatId, searchText, mapped)
+    if (!message) {
+      throw new Error(t('chat.error.failed'))
+    }
     if (!mapped.length) {
       errorMsg.value = t('chat.error.noResults')
     }
@@ -132,26 +165,82 @@ function selectPaper(messageId: string, paperKey: string) {
   selectedPaperKey.value = paperKey
 }
 
+async function loadChats() {
+  if (!auth.isAuthenticated || isChatsLoading.value) return
+  isChatsLoading.value = true
+  try {
+    const response = await AlibApi.get_all_user_chats()
+    chatStore.setChatsFromApi(response.chats ?? [])
+  } catch (error) {
+    // leave chat list empty on load failure
+  } finally {
+    isChatsLoading.value = false
+  }
+}
+
+let historyRequestId = 0
+async function loadChatHistory(chatId: number) {
+  const chat = chatStore.activeChat
+  if (!chat || chat.historyLoaded) return
+  const reqId = ++historyRequestId
+  try {
+    const response = await AlibApi.get_chat_history(chatId)
+    if (reqId !== historyRequestId) return
+    const mappedMessages = (response.chat_messages ?? []).map((message, msgIndex) => {
+      const createdAt = toTimestamp(message.created_at)
+      const updatedAt = toTimestamp(message.updated_at || message.created_at)
+      const results = (message.papers ?? [])
+        .map((paper, index) => toPaperCard(paper, index))
+        .filter((item): item is PaperCard => !!item)
+      return {
+        id: `${chatId}-${createdAt || msgIndex}-${msgIndex}`,
+        query: message.search_query?.trim() || '',
+        createdAt,
+        updatedAt,
+        results,
+      }
+    })
+    chatStore.setMessages(chatId, mappedMessages)
+  } catch (error) {
+    chatStore.markHistoryLoaded(chatId)
+  }
+}
+
 onMounted(() => {
-  if (!chatStore.activeChatId) {
-    const chat = chatStore.createChat()
-    chatStore.setActiveChat(chat.id)
+  if (auth.isAuthenticated) {
+    loadChats()
   }
 })
 
 watch(
+  () => auth.isAuthenticated,
+  (isAuthed) => {
+    if (isAuthed) {
+      loadChats()
+    } else {
+      chatStore.reset()
+    }
+  },
+)
+
+watch(
   () => chatStore.activeChatId,
-  () => {
+  async (chatId) => {
+    if (!chatId) {
+      selectedMessageId.value = null
+      selectedPaperKey.value = null
+      return
+    }
+    await loadChatHistory(chatId)
     const msgs = chatStore.activeChat?.messages ?? []
     if (msgs.length) {
       const last = msgs[msgs.length - 1]
       selectedMessageId.value = last.id
       selectedPaperKey.value = last.results[0]?.key ?? null
-      nextTick().then(() => {
-        if (logRef.value) {
-          logRef.value.scrollTop = logRef.value.scrollHeight
-        }
-      })
+      await nextTick()
+      if (logRef.value) {
+        logRef.value.scrollTop = logRef.value.scrollHeight
+      }
     } else {
       selectedMessageId.value = null
       selectedPaperKey.value = null

@@ -45,12 +45,11 @@ function RedirecttoModerator() {
 
 function handleNewSearch() {
   cancelInlineRename()
-  const chat = chatStore.createChat()
+  chatStore.clearActiveChat()
   router.push('/')
-  chatStore.setActiveChat(chat.id)
 }
 
-function selectChat(id: string) {
+function selectChat(id: number) {
   cancelInlineRename()
   chatStore.setActiveChat(id)
   router.push('/')
@@ -72,18 +71,18 @@ watch(
   { immediate: true },
 )
 
-const openHistoryMenuId = ref<string | null>(null)
+const openHistoryMenuId = ref<number | null>(null)
 const isDeleteDialogOpen = ref(false)
-const deleteCandidateId = ref<string | null>(null)
-const editingChatId = ref<string | null>(null)
+const deleteCandidateId = ref<number | null>(null)
+const editingChatId = ref<number | null>(null)
 const editTitle = ref('')
 const editInputRef = ref<HTMLInputElement | null>(null)
 
-function getChatById(chatId: string) {
+function getChatById(chatId: number) {
   return chats.value.find((item) => item.id === chatId)
 }
 
-function toggleHistoryMenu(chatId: string) {
+function toggleHistoryMenu(chatId: number) {
   openHistoryMenuId.value = openHistoryMenuId.value === chatId ? null : chatId
 }
 
@@ -98,7 +97,7 @@ function handleOutsideClick(event: MouseEvent) {
   closeHistoryMenu()
 }
 
-async function handleShareChat(chatId: string) {
+async function handleShareChat(chatId: number) {
   const chat = getChatById(chatId)
   if (!chat || typeof window === 'undefined') return
   const route = router.resolve({ path: '/', query: { chat: chatId } })
@@ -116,7 +115,7 @@ async function handleShareChat(chatId: string) {
   })
 }
 
-function startInlineRename(chatId: string) {
+function startInlineRename(chatId: number) {
   const chat = getChatById(chatId)
   if (!chat) return
   editingChatId.value = chatId
@@ -133,7 +132,7 @@ function cancelInlineRename() {
   editTitle.value = ''
 }
 
-function submitInlineRename(chatId: string) {
+function submitInlineRename(chatId: number) {
   const chat = getChatById(chatId)
   if (!chat) {
     cancelInlineRename()
@@ -151,12 +150,12 @@ function submitInlineRename(chatId: string) {
   cancelInlineRename()
 }
 
-function handleRenameBlur(chatId: string) {
+function handleRenameBlur(chatId: number) {
   if (editingChatId.value !== chatId) return
   submitInlineRename(chatId)
 }
 
-function requestDeleteChat(chatId: string) {
+function requestDeleteChat(chatId: number) {
   const chat = getChatById(chatId)
   if (!chat) return
   deleteCandidateId.value = chatId
