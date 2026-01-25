@@ -27,6 +27,17 @@ export const AlibApi = {
     }
     return api.post<ChatResponse>(`/chats/`, payload).then((r) => r.data)
   },
+  update_chat(chat_id: number, title: string) {
+    const id = `${encodeURIComponent(chat_id)}`
+    const payload = <CreateChatRequest>{
+      title: title,
+    }
+    return api.put<ChatResponse>(`/chats/${id}`, payload).then((r) => r.data)
+  },
+  delete_chat(chat_id: number) {
+    const id = `${encodeURIComponent(chat_id)}`
+    return api.delete<void>(`/chats/${id}`).then((r) => r.data)
+  },
   get_all_user_chats() {
     return api.get<ChatsResponse>(`/chats/`).then((r) => r.data)
   },

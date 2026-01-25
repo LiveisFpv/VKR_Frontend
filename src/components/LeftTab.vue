@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useToastStore } from '@/stores/toastStore'
 import { copyToClipboard } from '@/utils/copyToClipboard'
+import { AlibApi } from '@/api/useAlibApi'
 const authStore = useAuthStore()
 const { t } = useI18n()
 const router = useRouter()
@@ -76,7 +77,15 @@ const isDeleteDialogOpen = ref(false)
 const deleteCandidateId = ref<number | null>(null)
 const editingChatId = ref<number | null>(null)
 const editTitle = ref('')
-const editInputRef = ref<HTMLInputElement | null>(null)
+const editInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null)
+
+function getEditInput() {
+  const input = editInputRef.value
+  if (Array.isArray(input)) {
+    return input[0] ?? null
+  }
+  return input ?? null
+}
 
 function getChatById(chatId: number) {
   return chats.value.find((item) => item.id === chatId)
@@ -122,8 +131,9 @@ function startInlineRename(chatId: number) {
   editTitle.value = chat.title
   closeHistoryMenu()
   nextTick(() => {
-    editInputRef.value?.focus()
-    editInputRef.value?.select()
+    const input = getEditInput()
+    input?.focus()
+    input?.select()
   })
 }
 
@@ -132,22 +142,36 @@ function cancelInlineRename() {
   editTitle.value = ''
 }
 
-function submitInlineRename(chatId: number) {
+async function submitInlineRename(chatId: number) {
   const chat = getChatById(chatId)
   if (!chat) {
     cancelInlineRename()
     return
   }
-  const renamed = chatStore.renameChat(chatId, editTitle.value)
-  if (!renamed) {
+  const trimmed = editTitle.value.trim()
+  if (!trimmed) {
     toastStore.show(t('history.renameValidation'), { variant: 'error' })
     nextTick(() => {
-      editInputRef.value?.focus()
-      editInputRef.value?.select()
+      const input = getEditInput()
+      input?.focus()
+      input?.select()
     })
     return
   }
-  cancelInlineRename()
+  try {
+    const updated = await AlibApi.update_chat(chatId, trimmed)
+    chatStore.upsertChatFromApi(updated)
+    cancelInlineRename()
+  } catch (error) {
+    toastStore.show((error as { message?: string })?.message || t('chat.error.failed'), {
+      variant: 'error',
+    })
+    nextTick(() => {
+      const input = getEditInput()
+      input?.focus()
+      input?.select()
+    })
+  }
 }
 
 function handleRenameBlur(chatId: number) {
@@ -168,19 +192,28 @@ function handleDeleteCancel() {
   deleteCandidateId.value = null
 }
 
-function handleDeleteConfirm() {
+async function handleDeleteConfirm() {
   const chatId = deleteCandidateId.value
   if (!chatId) {
     isDeleteDialogOpen.value = false
     return
   }
-  const wasActive = activeChatId.value === chatId
-  const deleted = chatStore.deleteChat(chatId)
-  deleteCandidateId.value = null
-  isDeleteDialogOpen.value = false
-  if (!deleted) return
-  if (wasActive) {
-    router.push('/')
+  try {
+    await AlibApi.delete_chat(chatId)
+    const wasActive = activeChatId.value === chatId
+    const deleted = chatStore.deleteChat(chatId)
+    deleteCandidateId.value = null
+    isDeleteDialogOpen.value = false
+    if (!deleted) return
+    if (wasActive) {
+      router.push('/')
+    }
+  } catch (error) {
+    toastStore.show((error as { message?: string })?.message || t('chat.error.failed'), {
+      variant: 'error',
+    })
+    isDeleteDialogOpen.value = false
+    deleteCandidateId.value = null
   }
 }
 
