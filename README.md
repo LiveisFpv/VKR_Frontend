@@ -1,4 +1,4 @@
-# VKR_Frontend
+# ALib_Frontend
 
 Фронтенд веб‑приложения на Vue 3 для интеллектуального поиска и управления публикациями со входом через SSO, ролями (USER/AUTHOR, MODERATOR, ADMIN), страницами профиля и разделами. Проект собран на Vite и TypeScript, использует Pinia, Vue Router и Axios.
 
